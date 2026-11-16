@@ -1,0 +1,22 @@
+{
+  "name": "ANTAPHARMA ERP — Gestión de Esterilización Médica",
+  "short_name": "Antapharma ERP",
+  "description": "Sistema ERP, Inventario, Flujo de Caja y Trazabilidad Privada para Antapharma Distribuidora",
+  "start_url": "/dashboard",
+  "display": "standalone",
+  "background_color": "#05060a",
+  "theme_color": "#05060a",
+  "orientation": "portrait-primary",
+  "icons": [
+    {
+      "src": "/logo-antapharma.png",
+      "sizes": "192x192",
+      "type": "image/png"
+    },
+    {
+      "src": "/logo-antapharma.png",
+      "sizes": "512x512",
+      "type": "image/png"
+    }
+  ]
+}
