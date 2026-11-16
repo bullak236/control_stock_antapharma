@@ -1,0 +1,135 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider  = "postgresql"
+  url       = env("DATABASE_URL")
+  directUrl = env("DIRECT_URL")
+}
+
+enum RolUsuario {
+  OWNER
+  ADMIN
+  AUDITOR
+}
+
+enum TipoEntidad {
+  CLIENTE
+  PROVEEDOR
+}
+
+enum TipoMovimiento {
+  ENTRADA
+  SALIDA
+}
+
+enum TipoTransaccion {
+  INGRESO
+  EGRESO
+}
+
+model Usuario {
+  id            String         @id @default(uuid())
+  email         String         @unique
+  nombre        String         @default("David - Dirección General")
+  password_hash String
+  rol           RolUsuario     @default(OWNER)
+  createdAt     DateTime       @default(now())
+  logs          LogAuditoria[]
+
+  @@map("erp_usuarios")
+}
+
+model Categoria {
+  id          String     @id @default(uuid())
+  nombre      String     @unique
+  descripcion String?
+  createdAt   DateTime   @default(now())
+  productos   Producto[]
+
+  @@map("erp_categorias")
+}
+
+model Producto {
+  id           String            @id @default(uuid())
+  codigo       String            @unique
+  nombre       String
+  medida       String
+  presentacion String
+  stockActual  Int               @default(0)
+  stockMinimo  Int               @default(10)
+  precioCosto  Float             @default(0)
+  precioVenta  Float             @default(0)
+  categoriaId  String
+  categoria    Categoria         @relation(fields: [categoriaId], references: [id], onDelete: Restrict)
+  movimientos  MovimientoStock[]
+  updatedAt    DateTime          @updatedAt
+  createdAt    DateTime          @default(now())
+
+  @@index([categoriaId])
+  @@index([codigo])
+  @@map("erp_productos")
+}
+
+model Entidad {
+  id            String                  @id @default(uuid())
+  nombre        String
+  tipo          TipoEntidad
+  telefono      String
+  email         String
+  cuit          String?
+  direccion     String?
+  createdAt     DateTime                @default(now())
+  movimientos   MovimientoStock[]
+  transacciones TransaccionFinanciera[]
+
+  @@index([tipo])
+  @@map("erp_entidades")
+}
+
+model MovimientoStock {
+  id         String         @id @default(uuid())
+  tipo       TipoMovimiento
+  cantidad   Int
+  fecha      DateTime       @default(now())
+  motivo     String
+  productoId String
+  entidadId  String?
+  producto   Producto       @relation(fields: [productoId], references: [id], onDelete: Cascade)
+  entidad    Entidad?       @relation(fields: [entidadId], references: [id], onDelete: SetNull)
+
+  @@index([productoId])
+  @@index([entidadId])
+  @@index([fecha])
+  @@map("erp_movimientos_stock")
+}
+
+model TransaccionFinanciera {
+  id          String          @id @default(uuid())
+  tipo        TipoTransaccion
+  monto       Float
+  concepto    String
+  comprobante String?
+  fecha       DateTime        @default(now())
+  entidadId   String?
+  entidad     Entidad?        @relation(fields: [entidadId], references: [id], onDelete: SetNull)
+
+  @@index([tipo])
+  @@index([fecha])
+  @@index([entidadId])
+  @@map("erp_transacciones_financieras")
+}
+
+model LogAuditoria {
+  id        String   @id @default(uuid())
+  accion    String
+  detalle   String
+  fecha     DateTime @default(now())
+  usuarioId String
+  usuario   Usuario  @relation(fields: [usuarioId], references: [id], onDelete: Cascade)
+
+  @@index([usuarioId])
+  @@index([fecha])
+  @@map("erp_logs_auditoria")
+}
