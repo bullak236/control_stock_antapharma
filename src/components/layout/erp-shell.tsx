@@ -10,45 +10,64 @@ import {
   Building2,
   Wallet,
   FileBarChart2,
-  ShieldCheck,
+  HeartHandshake,
   LogOut,
   Menu,
   X,
-  Activity,
-  Sparkles,
+  Phone,
+  Mail,
 } from "lucide-react";
 import { logoutAction } from "@/app/actions/erp-actions";
+import {
+  AntapharmaLogo,
+  FranjaTestigo,
+  PuntoTestigoPill,
+} from "@/components/brand/antapharma-brand";
+import { BRAND_CONTACT } from "@/lib/catalogo-2027-data";
 
 const NAV_ITEMS = [
   {
     href: "/dashboard",
-    label: "Dashboard Bento",
-    subtitle: "Resumen ejecutivo y alertas",
+    shortLabel: "Inicio",
+    label: "Inicio & Catálogo",
+    subtitle: "Resumen, parámetros y envío",
     icon: LayoutGrid,
   },
   {
     href: "/productos",
+    shortLabel: "Stock/Lista",
     label: "Inventario & Precios",
-    subtitle: "Insumos, stock y movimientos",
+    subtitle: "154 insumos, costos y listas",
     icon: Package,
   },
   {
     href: "/entidades",
-    label: "Clientes & Proveedores",
-    subtitle: "Hospitales y laboratorios",
+    shortLabel: "Clientes",
+    label: "Clientes & Markups",
+    subtitle: "Markups por línea y directorio",
     icon: Building2,
   },
   {
     href: "/finanzas",
+    shortLabel: "Finanzas",
     label: "Flujo Financiero",
     subtitle: "Caja, ingresos y compras",
     icon: Wallet,
   },
   {
     href: "/reportes",
-    label: "Reportes & Exportación",
-    subtitle: "Catálogo PDF, XLSX y CSV",
+    shortLabel: "Reportes",
+    label: "Reportes & Planilla",
+    subtitle: "Catálogo PDF, Lista y Excel",
     icon: FileBarChart2,
+  },
+  {
+    href: "/pami",
+    shortLabel: "PAMI",
+    label: "PAMI",
+    subtitle: "Convenios y prestaciones",
+    icon: HeartHandshake,
+    isPami: true,
   },
 ];
 
@@ -78,49 +97,48 @@ export function ErpShell({
   }
 
   return (
-    <div className="min-h-screen flex bg-[#05060a] text-white">
+    <div className="min-h-screen flex bg-[#091E22] text-[#F6F3EE]">
       {/* Sidebar Desktop */}
-      <aside className="hidden lg:flex lg:w-72 lg:flex-col lg:fixed lg:inset-y-0 z-40 border-r border-white/10 bg-[#07090f]/90 backdrop-blur-2xl">
-        <div className="flex items-center gap-3.5 px-6 h-20 border-b border-white/8">
-          <div className="relative flex h-11 w-11 shrink-0 items-center justify-center rounded-xl border border-cyan-400/30 bg-gradient-to-br from-cyan-500/20 via-slate-900 to-emerald-500/20 shadow-[0_0_25px_rgba(34,211,238,0.2)]">
-            <img
-              src="/logo-antapharma.png"
-              alt="Antapharma"
-              className="h-8 w-8 object-contain"
+      <aside className="hidden lg:flex lg:w-72 lg:flex-col lg:fixed lg:inset-y-0 z-40 border-r border-[#DCEBE8]/15 bg-[#0F3A40] shadow-2xl">
+        {/* Franja Testigo superior */}
+        <FranjaTestigo variant="cobre-petroleo" className="h-2 w-full" />
+
+        <div className="flex items-center justify-between px-6 py-5 border-b border-[#DCEBE8]/12">
+          <Link href="/dashboard">
+            <AntapharmaLogo
+              variant="negative"
+              size="md"
+              showDescriptor={true}
             />
-          </div>
-          <div className="min-w-0">
-            <div className="flex items-center gap-1.5">
-              <span className="text-sm font-bold tracking-wider text-white truncate">
-                ANTAPHARMA
-              </span>
-              <span className="rounded-md bg-cyan-500/15 border border-cyan-400/30 px-1.5 py-0.5 text-[9px] font-semibold uppercase tracking-wider text-cyan-300">
-                ERP
-              </span>
-            </div>
-            <p className="text-[11px] text-white/50 truncate">
-              Esterilización Médica • Privado
-            </p>
-          </div>
+          </Link>
         </div>
 
-        <div className="px-4 py-4">
-          <div className="rounded-xl border border-white/8 bg-white/[0.03] p-3">
+        {/* Tarjeta institucional Dirección Comercial */}
+        <div className="px-4 py-3.5">
+          <div className="rounded-xl border border-[#DCEBE8]/15 bg-[#1D2527]/50 p-3.5">
             <div className="flex items-center justify-between">
-              <span className="flex items-center gap-1.5 text-[11px] font-medium text-emerald-400">
-                <span className="h-2 w-2 rounded-full bg-emerald-400 animate-pulse" />
-                Cloudflare Edge + Supabase
+              <span className="inline-flex items-center gap-2 font-mono text-[10px] uppercase tracking-wider text-[#DCEBE8]">
+                <span className="h-2 w-2 rounded-full bg-[#B9673A]" />
+                El Testigo · v1.1
               </span>
-              <ShieldCheck className="h-3.5 w-3.5 text-cyan-400" />
+              <span className="font-mono text-[10px] text-[#DCEBE8]/70">
+                SDE · AR
+              </span>
             </div>
-            <p className="mt-1 text-xs font-semibold text-white">
-              David — Dirección General
+            <p className="mt-1.5 text-xs font-bold text-white">
+              {BRAND_CONTACT.responsable}
             </p>
-            <p className="text-[11px] text-white/45">david@antapharma.com</p>
+            <p className="font-mono text-[10px] text-[#DCEBE8]/75 truncate">
+              {BRAND_CONTACT.email}
+            </p>
+            <p className="font-mono text-[10px] text-[#DCEBE8]/65">
+              {BRAND_CONTACT.telefono}
+            </p>
           </div>
         </div>
 
-        <nav className="flex-1 space-y-1.5 px-3 py-2 overflow-y-auto custom-scroll">
+        {/* Navegación Principal */}
+        <nav className="flex-1 space-y-1 px-3 py-1 overflow-y-auto custom-scroll">
           {NAV_ITEMS.map((item) => {
             const IconComp = item.icon;
             const active =
@@ -129,31 +147,40 @@ export function ErpShell({
               <Link
                 key={item.href}
                 href={item.href}
-                className={`group relative flex items-center gap-3.5 rounded-xl px-3.5 py-3 transition-all duration-200 ${
+                className={`group relative flex items-center gap-3 rounded-xl px-3.5 py-2.5 transition-all duration-150 ${
                   active
-                    ? "bg-gradient-to-r from-cyan-500/15 via-white/[0.06] to-transparent text-white border border-cyan-400/30 shadow-[0_4px_20px_rgba(34,211,238,0.1)]"
-                    : "text-white/60 hover:bg-white/[0.04] hover:text-white border border-transparent"
+                    ? "bg-[#1E7F7A]/30 text-white border border-[#B9673A]/60 shadow-md"
+                    : "text-[#DCEBE8]/75 hover:bg-white/[0.05] hover:text-white border border-transparent"
                 }`}
               >
                 <div
                   className={`flex h-9 w-9 shrink-0 items-center justify-center rounded-lg border transition-colors ${
                     active
-                      ? "border-cyan-400/40 bg-cyan-500/20 text-cyan-300"
-                      : "border-white/10 bg-white/[0.03] text-white/60 group-hover:text-white"
+                      ? "border-[#B9673A] bg-[#B9673A] text-white"
+                      : item.isPami
+                      ? "border-[#1E7F7A]/50 bg-[#1E7F7A]/20 text-[#DCEBE8]"
+                      : "border-[#DCEBE8]/15 bg-[#1D2527]/40 text-[#DCEBE8]/80 group-hover:text-white"
                   }`}
                 >
                   <IconComp className="h-4 w-4" />
                 </div>
                 <div className="min-w-0 flex-1">
-                  <p className="text-xs font-semibold tracking-wide truncate">
-                    {item.label}
-                  </p>
-                  <p className="text-[10px] text-white/40 truncate">
+                  <div className="flex items-center gap-1.5">
+                    <p className="text-xs font-bold tracking-wide truncate">
+                      {item.label}
+                    </p>
+                    {item.isPami && (
+                      <span className="rounded bg-[#1E7F7A] px-1.5 py-0.5 font-mono text-[9px] font-bold uppercase text-white">
+                        NUEVO
+                      </span>
+                    )}
+                  </div>
+                  <p className="text-[11px] text-[#DCEBE8]/55 truncate">
                     {item.subtitle}
                   </p>
                 </div>
                 {item.href === "/productos" && criticalCount > 0 && (
-                  <span className="rounded-full bg-rose-500/20 border border-rose-500/40 px-2 py-0.5 text-[10px] font-bold text-rose-300">
+                  <span className="rounded-full bg-[#B9673A] px-2 py-0.5 font-mono text-[10px] font-bold text-white">
                     {criticalCount}
                   </span>
                 )}
@@ -162,63 +189,68 @@ export function ErpShell({
           })}
         </nav>
 
-        <div className="p-4 border-t border-white/10 space-y-3">
-          <div className="rounded-xl border border-cyan-500/15 bg-gradient-to-br from-cyan-500/[0.07] to-transparent p-3">
-            <div className="flex items-center gap-2 text-xs font-medium text-cyan-300">
-              <Sparkles className="h-3.5 w-3.5" />
-              <span>PWA Instalable Activa</span>
-            </div>
-            <p className="mt-1 text-[11px] text-white/50 leading-relaxed">
-              Acceso directo encriptado para control de stock y tesorería.
+        {/* Pie Sidebar */}
+        <div className="p-4 border-t border-[#DCEBE8]/12 space-y-3">
+          <div className="rounded-xl border border-[#DCEBE8]/12 bg-[#1D2527]/40 p-3">
+            <p className="font-display text-xs font-bold text-[#B9673A]">
+              “{BRAND_CONTACT.claim}”
+            </p>
+            <p className="mt-0.5 text-[11px] text-[#DCEBE8]/65">
+              {BRAND_CONTACT.direccion} · Santiago del Estero
             </p>
           </div>
 
           <button
             onClick={handleLogout}
             disabled={loggingOut}
-            className="flex w-full items-center justify-center gap-2 rounded-xl border border-white/10 bg-white/[0.03] px-4 py-2.5 text-xs font-semibold text-white/75 transition-all hover:border-rose-500/40 hover:bg-rose-500/10 hover:text-rose-200"
+            className="flex w-full items-center justify-center gap-2 rounded-xl border border-[#DCEBE8]/15 bg-[#1D2527]/50 px-4 py-2.5 text-xs font-semibold text-[#DCEBE8] transition-all hover:border-[#8C3B4A] hover:bg-[#8C3B4A]/30 hover:text-white"
           >
             <LogOut className="h-3.5 w-3.5" />
-            {loggingOut ? "Cerrando sesión..." : "Cerrar Sesión Segura"}
+            {loggingOut ? "Cerrando sesión..." : "Cerrar sesión"}
           </button>
         </div>
       </aside>
 
       {/* Main Content Area */}
-      <div className="flex-1 lg:pl-72 flex flex-col min-w-0">
+      <div className="flex-1 lg:pl-72 flex flex-col min-w-0 pb-20 lg:pb-0">
         {/* Topbar */}
-        <header className="sticky top-0 z-30 border-b border-white/10 bg-[#05060a]/80 backdrop-blur-xl">
-          <div className="mx-auto flex h-20 max-w-7xl items-center justify-between px-4 sm:px-6 lg:px-8">
+        <header className="sticky top-0 z-30 border-b border-[#DCEBE8]/15 bg-[#0F3A40]/95 backdrop-blur-xl">
+          <div className="mx-auto flex h-16 sm:h-20 max-w-7xl items-center justify-between px-3.5 sm:px-6 lg:px-8">
             <div className="flex items-center gap-3 min-w-0">
               <button
                 onClick={() => setMobileOpen(true)}
-                className="lg:hidden rounded-xl border border-white/10 bg-white/5 p-2.5 text-white/80 hover:text-white"
+                className="lg:hidden rounded-lg border border-[#DCEBE8]/20 bg-white/5 p-2 text-[#F6F3EE] hover:bg-white/10"
                 aria-label="Abrir menú"
               >
                 <Menu className="h-5 w-5" />
               </button>
               <div className="min-w-0">
-                <h1 className="text-lg sm:text-xl font-bold tracking-tight text-white truncate">
+                <h1 className="font-display text-base sm:text-xl font-bold tracking-tight text-white truncate">
                   {title}
                 </h1>
-                <p className="text-xs text-white/50 truncate">{subtitle}</p>
+                <p className="text-[11px] sm:text-xs text-[#DCEBE8]/70 truncate">
+                  {subtitle}
+                </p>
               </div>
             </div>
 
-            <div className="flex items-center gap-3">
+            <div className="flex items-center gap-2 sm:gap-3 shrink-0">
               {criticalCount > 0 && (
                 <Link
-                  href="/productos?filtro=critico"
-                  className="hidden sm:inline-flex items-center gap-2 rounded-full border border-rose-500/35 bg-rose-500/10 px-3.5 py-1.5 text-xs font-medium text-rose-300 transition-colors hover:bg-rose-500/20"
+                  href="/productos"
+                  className="inline-flex items-center gap-2 rounded-full border border-[#B9673A]/60 bg-[#B9673A]/20 px-2.5 sm:px-3.5 py-1 sm:py-1.5 text-[11px] sm:text-xs font-semibold text-white transition-colors hover:bg-[#B9673A]/35"
                 >
-                  <span className="h-2 w-2 rounded-full bg-rose-400 animate-ping" />
+                  <span className="h-2 w-2 rounded-full bg-[#B9673A]" />
                   <span>{criticalCount} Stock Crítico</span>
                 </Link>
               )}
 
-              <div className="hidden md:flex items-center gap-2 rounded-full border border-white/10 bg-white/[0.04] px-3.5 py-1.5 text-xs text-white/75">
-                <Activity className="h-3.5 w-3.5 text-cyan-400" />
-                <span>PostgreSQL Live</span>
+              <div className="hidden xl:flex items-center gap-2">
+                <PuntoTestigoPill
+                  label="Stock disponible"
+                  sublabel="CATÁLOGO 2027"
+                  tone="dark"
+                />
               </div>
             </div>
           </div>
@@ -231,38 +263,37 @@ export function ErpShell({
               initial={{ opacity: 0 }}
               animate={{ opacity: 1 }}
               exit={{ opacity: 0 }}
-              className="fixed inset-0 z-50 bg-black/80 backdrop-blur-md lg:hidden"
+              className="fixed inset-0 z-50 bg-black/80 backdrop-blur-sm lg:hidden"
               onClick={() => setMobileOpen(false)}
             >
               <motion.div
-                initial={{ x: -280 }}
+                initial={{ x: -290 }}
                 animate={{ x: 0 }}
-                exit={{ x: -280 }}
-                transition={{ duration: 0.25 }}
-                className="h-full w-72 border-r border-white/10 bg-[#080a10] p-5 flex flex-col justify-between"
+                exit={{ x: -290 }}
+                transition={{ duration: 0.22 }}
+                className="h-full w-76 max-w-[85vw] border-r border-[#DCEBE8]/20 bg-[#0F3A40] flex flex-col justify-between overflow-y-auto"
                 onClick={(e) => e.stopPropagation()}
               >
                 <div>
-                  <div className="flex items-center justify-between pb-5 border-b border-white/10">
-                    <div className="flex items-center gap-2.5">
-                      <img
-                        src="/logo-antapharma.png"
-                        alt="Antapharma"
-                        className="h-8 w-8 object-contain"
-                      />
-                      <span className="font-bold text-sm tracking-wide">
-                        ANTAPHARMA ERP
-                      </span>
-                    </div>
+                  <FranjaTestigo
+                    variant="cobre-petroleo"
+                    className="h-2 w-full"
+                  />
+                  <div className="flex items-center justify-between p-4 border-b border-[#DCEBE8]/15">
+                    <AntapharmaLogo
+                      variant="negative"
+                      size="sm"
+                      showDescriptor={true}
+                    />
                     <button
                       onClick={() => setMobileOpen(false)}
-                      className="rounded-lg p-1.5 text-white/60 hover:text-white"
+                      className="rounded-lg p-1.5 text-[#DCEBE8]/70 hover:text-white"
                     >
                       <X className="h-5 w-5" />
                     </button>
                   </div>
 
-                  <nav className="mt-5 space-y-1.5">
+                  <nav className="p-3 space-y-1.5">
                     {NAV_ITEMS.map((item) => {
                       const IconComp = item.icon;
                       const active = pathname === item.href;
@@ -271,36 +302,93 @@ export function ErpShell({
                           key={item.href}
                           href={item.href}
                           onClick={() => setMobileOpen(false)}
-                          className={`flex items-center gap-3 rounded-xl px-3.5 py-3 text-xs font-semibold ${
+                          className={`flex items-center justify-between rounded-xl px-3.5 py-3 text-xs font-bold ${
                             active
-                              ? "bg-cyan-500/15 text-cyan-300 border border-cyan-400/30"
-                              : "text-white/70 hover:bg-white/5"
+                              ? "bg-[#B9673A] text-white shadow"
+                              : "text-[#DCEBE8]/85 hover:bg-white/10"
                           }`}
                         >
-                          <IconComp className="h-4 w-4" />
-                          <span>{item.label}</span>
+                          <span className="flex items-center gap-3">
+                            <IconComp className="h-4 w-4" />
+                            <span>{item.label}</span>
+                          </span>
+                          {item.isPami && (
+                            <span className="rounded bg-[#1E7F7A] px-1.5 py-0.5 font-mono text-[9px] uppercase text-white">
+                              PAMI
+                            </span>
+                          )}
                         </Link>
                       );
                     })}
                   </nav>
                 </div>
 
-                <button
-                  onClick={handleLogout}
-                  className="flex w-full items-center justify-center gap-2 rounded-xl border border-rose-500/30 bg-rose-500/10 px-4 py-2.5 text-xs font-semibold text-rose-200"
-                >
-                  <LogOut className="h-4 w-4" />
-                  Cerrar Sesión
-                </button>
+                <div className="p-4 border-t border-[#DCEBE8]/15 space-y-3">
+                  <div className="rounded-xl bg-[#1D2527]/50 p-3 text-xs text-[#DCEBE8]/80 space-y-1">
+                    <p className="font-bold text-white">
+                      {BRAND_CONTACT.responsable}
+                    </p>
+                    <p className="flex items-center gap-1.5 font-mono text-[11px]">
+                      <Phone className="h-3 w-3 text-[#B9673A]" />
+                      {BRAND_CONTACT.telefono}
+                    </p>
+                    <p className="flex items-center gap-1.5 font-mono text-[11px] truncate">
+                      <Mail className="h-3 w-3 text-[#B9673A]" />
+                      {BRAND_CONTACT.email}
+                    </p>
+                  </div>
+
+                  <button
+                    onClick={handleLogout}
+                    className="flex w-full items-center justify-center gap-2 rounded-xl border border-[#8C3B4A] bg-[#8C3B4A]/30 px-4 py-2.5 text-xs font-bold text-white"
+                  >
+                    <LogOut className="h-4 w-4" />
+                    Cerrar sesión
+                  </button>
+                </div>
               </motion.div>
             </motion.div>
           )}
         </AnimatePresence>
 
         {/* Page Container */}
-        <main className="mx-auto w-full max-w-7xl flex-1 px-4 py-7 sm:px-6 lg:px-8">
+        <main className="mx-auto w-full max-w-7xl flex-1 px-3.5 py-5 sm:px-6 sm:py-7 lg:px-8">
           {children}
         </main>
+
+        {/* Bottom Navigation Bar para Teléfono Móvil (100% Responsive) */}
+        <nav className="fixed bottom-0 inset-x-0 z-40 border-t border-[#DCEBE8]/15 bg-[#0F3A40]/95 backdrop-blur-xl lg:hidden">
+          <div className="grid grid-cols-6 h-16">
+            {NAV_ITEMS.map((item) => {
+              const IconComp = item.icon;
+              const active =
+                pathname === item.href || pathname.startsWith(`${item.href}/`);
+              return (
+                <Link
+                  key={item.href}
+                  href={item.href}
+                  className={`flex flex-col items-center justify-center gap-1 text-[10px] font-medium transition-colors ${
+                    active
+                      ? "text-[#B9673A] font-bold"
+                      : "text-[#DCEBE8]/70 hover:text-white"
+                  }`}
+                >
+                  <div className="relative">
+                    <IconComp className="h-4 w-4" />
+                    {item.href === "/productos" && criticalCount > 0 && (
+                      <span className="absolute -top-1.5 -right-2.5 h-3.5 min-w-3.5 rounded-full bg-[#B9673A] px-1 text-[8px] font-bold text-white flex items-center justify-center">
+                        {criticalCount}
+                      </span>
+                    )}
+                  </div>
+                  <span className="truncate max-w-[54px]">
+                    {item.shortLabel}
+                  </span>
+                </Link>
+              );
+            })}
+          </div>
+        </nav>
       </div>
     </div>
   );

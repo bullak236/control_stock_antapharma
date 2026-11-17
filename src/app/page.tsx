@@ -3,12 +3,18 @@
 import { useState } from "react";
 import { useRouter } from "next/navigation";
 import { motion } from "framer-motion";
-import { ShieldCheck, Lock, Mail, ArrowRight, KeyRound, Activity } from "lucide-react";
+import { Lock, Mail, ArrowRight, KeyRound } from "lucide-react";
 import { loginAction } from "@/app/actions/erp-actions";
+import {
+  AntapharmaLogo,
+  FranjaTestigo,
+  PuntoTestigoPill,
+} from "@/components/brand/antapharma-brand";
+import { BRAND_CONTACT } from "@/lib/catalogo-2027-data";
 
 export default function LoginPage() {
   const router = useRouter();
-  const [email, setEmail] = useState("david@antapharma.com");
+  const [email, setEmail] = useState("antapharma@gmail.com");
   const [password, setPassword] = useState("Antapharma2026!");
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState("");
@@ -34,132 +40,192 @@ export default function LoginPage() {
   }
 
   return (
-    <div className="relative min-h-screen flex flex-col items-center justify-center px-4 py-12 overflow-hidden">
-      {/* Ambient OpenHero Glows */}
-      <div className="pointer-events-none absolute -top-40 left-1/2 -translate-x-1/2 h-96 w-[700px] rounded-full bg-cyan-500/12 blur-[130px]" />
-      <div className="pointer-events-none absolute bottom-0 right-10 h-80 w-80 rounded-full bg-emerald-500/10 blur-[120px]" />
+    <div className="relative min-h-screen flex flex-col justify-between bg-[#0F3A40] text-white overflow-hidden">
+      {/* Franja Testigo oficial en el borde derecho (como la Tapa del Manual v1.1 Pág. 01) */}
+      <FranjaTestigo
+        variant="cobre-petroleo"
+        className="fixed right-0 top-0 bottom-0 w-4 sm:w-8 z-20"
+      />
 
-      <motion.div
-        initial={{ opacity: 0, y: 16 }}
-        animate={{ opacity: 1, y: 0 }}
-        transition={{ duration: 0.4 }}
-        className="w-full max-w-md"
-      >
-        <div className="bento-glass rounded-3xl p-8 sm:p-10 border border-white/12 shadow-2xl">
-          <div className="flex flex-col items-center text-center">
-            <div className="relative mb-5 flex h-20 w-20 items-center justify-center rounded-2xl border border-cyan-400/30 bg-gradient-to-b from-white/10 to-white/[0.02] p-3 shadow-[0_0_40px_rgba(34,211,238,0.2)]">
-              <img
-                src="/logo-antapharma.png"
-                alt="Antapharma Distribuidora"
-                className="h-full w-full object-contain"
-              />
-            </div>
+      {/* Cabecera Superior */}
+      <header className="w-full max-w-6xl mx-auto px-5 sm:px-10 pt-6 sm:pt-8 pr-8 sm:pr-16 flex flex-wrap items-center justify-between gap-4">
+        <div className="flex items-center gap-6 font-mono text-[10px] sm:text-xs uppercase tracking-[0.18em] text-[#DCEBE8]/80">
+          <span>SISTEMA INTERNO ERP</span>
+          <span className="hidden sm:inline">·</span>
+          <span className="hidden sm:inline">CATÁLOGO 2027</span>
+          <span>·</span>
+          <span>V1.1 — 11.2026</span>
+        </div>
 
-            <div className="inline-flex items-center gap-1.5 rounded-full border border-cyan-400/30 bg-cyan-500/10 px-3 py-1 text-[11px] font-semibold uppercase tracking-widest text-cyan-300">
-              <ShieldCheck className="h-3.5 w-3.5" />
-              Acceso Privado Exclusivo
-            </div>
+        <PuntoTestigoPill
+          label="VERSIÓN 1.1 — LOGO DEFINIDO: EL TESTIGO"
+          tone="outline"
+          className="text-[10px]"
+        />
+      </header>
 
-            <h1 className="mt-4 text-2xl sm:text-3xl font-black tracking-tight text-white">
-              ANTAPHARMA{" "}
-              <span className="bg-gradient-to-r from-cyan-300 via-white to-emerald-300 bg-clip-text text-transparent">
-                ERP
-              </span>
-            </h1>
-            <p className="mt-1.5 text-xs sm:text-sm text-white/55">
-              Consola de Control de Stock, Flujo de Caja e Insumos de
-              Esterilización Médica — Dirección General (David)
-            </p>
-          </div>
+      {/* Cuerpo Central */}
+      <main className="w-full max-w-6xl mx-auto px-5 sm:px-10 py-8 pr-8 sm:pr-16 grid grid-cols-1 lg:grid-cols-12 gap-8 items-center">
+        {/* Columna Izquierda: Identidad de Marca Antapharma */}
+        <div className="lg:col-span-7 space-y-6">
+          <AntapharmaLogo variant="negative" size="lg" showDescriptor={true} />
 
-          <form onSubmit={handleSubmit} className="mt-8 space-y-4">
-            <div>
-              <label className="mb-1.5 block text-xs font-medium text-white/75">
-                Correo Electrónico Corporativo
-              </label>
-              <div className="relative">
-                <Mail className="pointer-events-none absolute left-3.5 top-1/2 -translate-y-1/2 h-4 w-4 text-white/40" />
-                <input
-                  type="email"
-                  required
-                  value={email}
-                  onChange={(e) => setEmail(e.target.value)}
-                  placeholder="david@antapharma.com"
-                  className="w-full rounded-xl border border-white/12 bg-white/[0.04] pl-10 pr-4 py-3 text-sm text-white placeholder-white/25 outline-none transition-colors focus:border-cyan-400/60 focus:bg-white/[0.07]"
-                />
-              </div>
-            </div>
+          <p className="font-display text-2xl sm:text-3xl text-[#B9673A] font-normal tracking-tight">
+            {BRAND_CONTACT.claim}
+          </p>
 
-            <div>
-              <label className="mb-1.5 block text-xs font-medium text-white/75">
-                Clave Maestra de Seguridad
-              </label>
-              <div className="relative">
-                <Lock className="pointer-events-none absolute left-3.5 top-1/2 -translate-y-1/2 h-4 w-4 text-white/40" />
-                <input
-                  type="password"
-                  required
-                  value={password}
-                  onChange={(e) => setPassword(e.target.value)}
-                  placeholder="••••••••••••"
-                  className="w-full rounded-xl border border-white/12 bg-white/[0.04] pl-10 pr-4 py-3 text-sm text-white placeholder-white/25 outline-none transition-colors focus:border-cyan-400/60 focus:bg-white/[0.07]"
-                />
-              </div>
-            </div>
+          <p className="text-sm sm:text-base text-[#DCEBE8]/85 max-w-xl leading-relaxed">
+            La distribuidora santiagueña de{" "}
+            <strong className="text-white">
+              descartables e insumos de esterilización
+            </strong>{" "}
+            que responde rápido, asesora con criterio técnico y entrega lo que
+            promete. Que en el área crítica nada falte ni falle.
+          </p>
 
-            {error && (
-              <div className="rounded-xl border border-rose-500/30 bg-rose-500/10 px-3.5 py-2.5 text-xs text-rose-200">
-                {error}
-              </div>
-            )}
-
-            <button
-              type="submit"
-              disabled={loading}
-              className="group relative mt-2 flex w-full items-center justify-center gap-2 rounded-xl bg-white px-5 py-3.5 text-sm font-bold text-slate-950 shadow-[0_0_25px_rgba(255,255,255,0.2)] transition-all hover:bg-cyan-50 disabled:opacity-50"
-            >
-              <span>
-                {loading
-                  ? "Verificando credenciales..."
-                  : "Ingresar a Consola ERP"}
-              </span>
-              <ArrowRight className="h-4 w-4 transition-transform group-hover:translate-x-1" />
-            </button>
-          </form>
-
-          {/* Quick Demo Fill for David */}
-          <div className="mt-6 rounded-2xl border border-white/8 bg-white/[0.025] p-3.5">
-            <div className="flex items-center justify-between text-[11px] text-white/60">
-              <span className="flex items-center gap-1.5 font-medium text-cyan-300">
-                <KeyRound className="h-3.5 w-3.5" />
-                Credenciales de Dirección precargadas
-              </span>
-              <button
-                type="button"
-                onClick={() => {
-                  setEmail("david@antapharma.com");
-                  setPassword("Antapharma2026!");
-                }}
-                className="underline decoration-white/30 hover:text-white"
+          {/* Las 6 Líneas Oficiales */}
+          <div className="pt-2 grid grid-cols-2 sm:grid-cols-3 gap-2.5 max-w-xl">
+            {[
+              { num: "01", name: "Descartables", color: "#B9673A" },
+              { num: "02", name: "Empaque esterilización", color: "#1E7F7A" },
+              { num: "03", name: "Control esterilización", color: "#C8952B" },
+              { num: "04", name: "Óxido de etileno", color: "#8C3B4A" },
+              { num: "05", name: "Limpieza y desinfección", color: "#2E6E9E" },
+              { num: "06", name: "Equipamiento y seguridad", color: "#55656A" },
+            ].map((l) => (
+              <div
+                key={l.num}
+                className="flex items-center gap-2 rounded-lg border border-[#DCEBE8]/15 bg-[#1D2527]/40 px-3 py-2 text-xs"
               >
-                Restaurar
-              </button>
-            </div>
-            <p className="mt-1 text-[11px] text-white/45 font-mono">
-              Usuario: david@antapharma.com • Clave: Antapharma2026!
-            </p>
-          </div>
-
-          <div className="mt-6 flex items-center justify-center gap-4 text-[11px] text-white/40">
-            <span className="flex items-center gap-1.5">
-              <Activity className="h-3 w-3 text-emerald-400" />
-              Supabase PostgreSQL
-            </span>
-            <span>•</span>
-            <span>Cloudflare Edge PWA</span>
+                <span
+                  style={{ backgroundColor: l.color }}
+                  className="h-2.5 w-4 shrink-0 rounded-full"
+                />
+                <span className="font-mono text-[10px] text-[#DCEBE8]/70">
+                  {l.num}
+                </span>
+                <span className="truncate font-medium text-white">
+                  {l.name}
+                </span>
+              </div>
+            ))}
           </div>
         </div>
-      </motion.div>
+
+        {/* Columna Derecha: Tarjeta de Acceso sobre Gasa / Petróleo */}
+        <motion.div
+          initial={{ opacity: 0, y: 14 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ duration: 0.35 }}
+          className="lg:col-span-5"
+        >
+          <div className="rounded-xl border border-[#DCEBE8]/20 bg-[#F6F3EE] p-6 sm:p-8 text-[#1D2527] shadow-2xl">
+            <div className="flex items-center justify-between border-b border-[#6B7A7D]/25 pb-4">
+              <div>
+                <span className="font-mono text-[10px] uppercase tracking-widest text-[#B9673A] font-bold">
+                  ACCESO DIRECCIÓN COMERCIAL
+                </span>
+                <h2 className="mt-1 font-display text-xl font-bold text-[#0F3A40]">
+                  Consola de Gestión Antapharma
+                </h2>
+              </div>
+              <span className="h-3 w-6 rounded-full bg-[#B9673A]" />
+            </div>
+
+            <form onSubmit={handleSubmit} className="mt-5 space-y-4">
+              <div>
+                <label className="mb-1.5 block text-xs font-bold text-[#0F3A40]">
+                  Correo electrónico
+                </label>
+                <div className="relative">
+                  <Mail className="pointer-events-none absolute left-3.5 top-1/2 -translate-y-1/2 h-4 w-4 text-[#6B7A7D]" />
+                  <input
+                    type="email"
+                    required
+                    value={email}
+                    onChange={(e) => setEmail(e.target.value)}
+                    placeholder="antapharma@gmail.com"
+                    className="w-full rounded-lg border border-[#6B7A7D]/40 bg-white pl-10 pr-4 py-2.5 text-sm text-[#1D2527] outline-none transition-colors focus:border-[#0F3A40]"
+                  />
+                </div>
+              </div>
+
+              <div>
+                <label className="mb-1.5 block text-xs font-bold text-[#0F3A40]">
+                  Clave de acceso
+                </label>
+                <div className="relative">
+                  <Lock className="pointer-events-none absolute left-3.5 top-1/2 -translate-y-1/2 h-4 w-4 text-[#6B7A7D]" />
+                  <input
+                    type="password"
+                    required
+                    value={password}
+                    onChange={(e) => setPassword(e.target.value)}
+                    placeholder="••••••••••••"
+                    className="w-full rounded-lg border border-[#6B7A7D]/40 bg-white pl-10 pr-4 py-2.5 text-sm text-[#1D2527] outline-none transition-colors focus:border-[#0F3A40]"
+                  />
+                </div>
+              </div>
+
+              {error && (
+                <div className="rounded-lg border border-[#8C3B4A] bg-[#8C3B4A]/10 px-3.5 py-2.5 text-xs font-medium text-[#8C3B4A]">
+                  {error}
+                </div>
+              )}
+
+              <button
+                type="submit"
+                disabled={loading}
+                className="group flex w-full items-center justify-center gap-2 rounded-lg bg-[#0F3A40] px-5 py-3 text-sm font-bold text-white transition-all hover:bg-[#1E7F7A] disabled:opacity-50"
+              >
+                <span>
+                  {loading
+                    ? "Verificando acceso..."
+                    : "Ingresar al Sistema Antapharma"}
+                </span>
+                <ArrowRight className="h-4 w-4 transition-transform group-hover:translate-x-1" />
+              </button>
+            </form>
+
+            <div className="mt-5 rounded-lg border border-[#6B7A7D]/25 bg-[#DCEBE8]/60 p-3">
+              <div className="flex items-center justify-between text-[11px] text-[#0F3A40]">
+                <span className="flex items-center gap-1.5 font-bold">
+                  <KeyRound className="h-3.5 w-3.5 text-[#B9673A]" />
+                  Acceso directo precargado
+                </span>
+                <button
+                  type="button"
+                  onClick={() => {
+                    setEmail("antapharma@gmail.com");
+                    setPassword("Antapharma2026!");
+                  }}
+                  className="underline font-semibold hover:text-[#B9673A]"
+                >
+                  Restaurar
+                </button>
+              </div>
+              <p className="mt-1 font-mono text-[11px] text-[#1D2527]/80">
+                {BRAND_CONTACT.email} · Clave: Antapharma2026!
+              </p>
+            </div>
+          </div>
+        </motion.div>
+      </main>
+
+      {/* Pie de Tapa (Igual al Manual Pág. 01) */}
+      <footer className="w-full max-w-6xl mx-auto px-5 sm:px-10 pb-6 pr-8 sm:pr-16 flex flex-wrap items-center justify-between gap-4 text-xs text-[#DCEBE8]/80">
+        <div>
+          <p className="font-bold text-white">
+            Descartables e insumos de esterilización
+          </p>
+          <p>
+            {BRAND_CONTACT.direccion} · {BRAND_CONTACT.ciudad}
+          </p>
+        </div>
+        <div className="font-mono text-[11px]">
+          {BRAND_CONTACT.telefono} · {BRAND_CONTACT.email}
+        </div>
+      </footer>
     </div>
   );
 }

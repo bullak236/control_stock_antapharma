@@ -4,25 +4,25 @@ import "./globals.css";
 export const viewport: Viewport = {
   width: "device-width",
   initialScale: 1,
-  themeColor: "#05060a",
+  themeColor: "#0F3A40",
 };
 
 export const metadata: Metadata = {
   title: {
-    default: "ANTAPHARMA ERP — Control de Stock, Finanzas y Esterilización Médica",
-    template: "%s | ANTAPHARMA ERP",
+    default: "Antapharma — Descartables e insumos de esterilización",
+    template: "%s | Antapharma",
   },
   description:
-    "Sistema ERP, Inventario, Flujo de Caja y Reportes 100% privado para ANTAPHARMA DISTRIBUIDORA de Insumos de Esterilización Médica.",
+    "Sistema de gestión de inventario, catálogo 2027, listas de precios por cliente, tesorería y PAMI para Antapharma (Santiago del Estero · Argentina). Cuidamos lo que cuida.",
   manifest: "/manifest.json",
   icons: {
-    icon: "/logo-antapharma.png",
-    apple: "/logo-antapharma.png",
+    icon: "/icon.svg",
+    apple: "/icon.svg",
   },
   appleWebApp: {
     capable: true,
     statusBarStyle: "black-translucent",
-    title: "Antapharma ERP",
+    title: "Antapharma",
   },
   robots: {
     index: false,

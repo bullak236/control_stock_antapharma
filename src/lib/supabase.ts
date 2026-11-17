@@ -22,10 +22,25 @@ export type TipoEntidad = "CLIENTE" | "PROVEEDOR";
 export type TipoMovimiento = "ENTRADA" | "SALIDA";
 export type TipoTransaccion = "INGRESO" | "EGRESO";
 
+export interface ParametrosErpDTO {
+  id: string;
+  ivaGeneral: number;
+  gastosGenerales: number;
+  redondeoMultiplo: number;
+  vigenciaDesde: string;
+  condiciones: string;
+  contacto: string;
+  notasCatalogo: string;
+  updatedAt?: string;
+}
+
 export interface CategoriaDTO {
   id: string;
   nombre: string;
   descripcion: string | null;
+  numeroLinea?: number;
+  colorHex?: string;
+  icono?: string;
 }
 
 export interface ProductoDTO {
@@ -33,11 +48,18 @@ export interface ProductoDTO {
   codigo: string;
   nombre: string;
   medida: string;
+  familia?: string;
   presentacion: string;
   stockActual: number;
   stockMinimo: number;
   precioCosto: number;
   precioVenta: number;
+  gastosPorcentaje?: number | null;
+  ivaPorcentaje?: number | null;
+  incluirEnLista?: boolean;
+  proveedorNombre?: string | null;
+  fechaCosto?: string | null;
+  ordenCatalogo?: number;
   categoriaId: string;
   categoria?: CategoriaDTO | null;
   updatedAt?: string;
@@ -47,10 +69,20 @@ export interface EntidadDTO {
   id: string;
   nombre: string;
   tipo: TipoEntidad;
+  subtipo?: string | null;
   telefono: string;
   email: string;
   cuit?: string | null;
   direccion?: string | null;
+  markupGeneral?: number;
+  markupLinea1?: number | null;
+  markupLinea2?: number | null;
+  markupLinea3?: number | null;
+  markupLinea4?: number | null;
+  markupLinea5?: number | null;
+  markupLinea6?: number | null;
+  condicionPago?: string | null;
+  notas?: string | null;
   createdAt?: string;
 }
 

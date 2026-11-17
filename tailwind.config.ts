@@ -10,6 +10,13 @@ const config: Config = {
   theme: {
     extend: {
       colors: {
+        petroleo: "#0F3A40",
+        quirofano: "#1E7F7A",
+        cobre: "#B9673A",
+        agua: "#DCEBE8",
+        gasa: "#F6F3EE",
+        tinta: "#1D2527",
+        acero: "#6B7A7D",
         background: "var(--color-background)",
         foreground: "var(--color-foreground)",
         accent: {
@@ -40,7 +47,9 @@ const config: Config = {
         },
       },
       fontFamily: {
-        sans: ["var(--font-google-sans)", "Inter", "ui-sans-serif", "system-ui"],
+        display: ["Bricolage Grotesque", "Arial", "sans-serif"],
+        sans: ["Instrument Sans", "Arial", "sans-serif"],
+        mono: ["IBM Plex Mono", "Consolas", "monospace"],
       },
     },
   },

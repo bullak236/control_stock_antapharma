@@ -41,9 +41,10 @@ export function FinanzasClient({ initialData }: { initialData: ErpSnapshot }) {
   const [entidadId, setEntidadId] = useState("");
 
   const [loading, setLoading] = useState(false);
-  const [banner, setBanner] = useState<{ type: "ok" | "err"; msg: string } | null>(
-    null
-  );
+  const [banner, setBanner] = useState<{
+    type: "ok" | "err";
+    msg: string;
+  } | null>(null);
 
   const criticalCount = initialData.productos.filter(
     (p) => p.stockActual <= p.stockMinimo
@@ -87,7 +88,10 @@ export function FinanzasClient({ initialData }: { initialData: ErpSnapshot }) {
 
     setLoading(false);
     if (!res.ok) {
-      setBanner({ type: "err", msg: res.error || "Error al asentar operación." });
+      setBanner({
+        type: "err",
+        msg: res.error || "Error al asentar operación.",
+      });
       return;
     }
 
@@ -119,22 +123,22 @@ export function FinanzasClient({ initialData }: { initialData: ErpSnapshot }) {
   return (
     <ErpShell
       title="Flujo Financiero & Tesorería"
-      subtitle="Asientos de ingresos por licitaciones/ventas y egresos por compras de insumos médicos"
+      subtitle="Asientos de ingresos por ventas/licitaciones y egresos por compras de insumos"
       criticalCount={criticalCount}
     >
       {banner && (
         <div
-          className={`mb-5 flex items-center justify-between rounded-2xl border px-4 py-3 text-xs ${
+          className={`mb-5 flex items-center justify-between rounded-xl border px-4 py-3 text-xs ${
             banner.type === "ok"
-              ? "border-emerald-500/30 bg-emerald-500/10 text-emerald-200"
-              : "border-rose-500/30 bg-rose-500/10 text-rose-200"
+              ? "border-[#1E7F7A] bg-[#1E7F7A]/20 text-white"
+              : "border-[#8C3B4A] bg-[#8C3B4A]/25 text-white"
           }`}
         >
-          <span className="flex items-center gap-2 font-medium">
+          <span className="flex items-center gap-2 font-semibold">
             {banner.type === "ok" ? (
-              <CheckCircle2 className="h-4 w-4 text-emerald-400" />
+              <CheckCircle2 className="h-4 w-4 text-[#B9673A]" />
             ) : (
-              <AlertTriangle className="h-4 w-4 text-rose-400" />
+              <AlertTriangle className="h-4 w-4 text-[#B9673A]" />
             )}
             {banner.msg}
           </span>
@@ -145,65 +149,65 @@ export function FinanzasClient({ initialData }: { initialData: ErpSnapshot }) {
       )}
 
       {/* Tarjetas de Caja */}
-      <div className="grid grid-cols-1 gap-5 md:grid-cols-3 mb-6">
-        <BentoCard glowColor="emerald">
+      <div className="grid grid-cols-1 gap-4 md:grid-cols-3 mb-6">
+        <BentoCard glowColor="quirofano">
           <div className="flex items-center justify-between">
-            <span className="text-xs font-semibold text-emerald-300">
+            <span className="font-mono text-xs font-bold uppercase text-[#DCEBE8]">
               Total Ingresos por Ventas
             </span>
-            <TrendingUp className="h-5 w-5 text-emerald-400" />
+            <TrendingUp className="h-5 w-5 text-[#1E7F7A]" />
           </div>
-          <p className="mt-3 text-3xl font-black text-white">
+          <p className="mt-3 font-display text-2xl sm:text-3xl font-bold text-white">
             {formatARS(totalIngresos)}
           </p>
-          <p className="mt-1 text-xs text-white/50">
-            Cobros acreditados de hospitales y clínicas
+          <p className="mt-1 text-xs text-[#DCEBE8]/70">
+            Cobros acreditados de hospitales, sanatorios y clínicas
           </p>
         </BentoCard>
 
         <BentoCard glowColor="rose">
           <div className="flex items-center justify-between">
-            <span className="text-xs font-semibold text-rose-300">
+            <span className="font-mono text-xs font-bold uppercase text-[#DCEBE8]">
               Total Egresos por Mercadería
             </span>
-            <TrendingDown className="h-5 w-5 text-rose-400" />
+            <TrendingDown className="h-5 w-5 text-[#8C3B4A]" />
           </div>
-          <p className="mt-3 text-3xl font-black text-white">
+          <p className="mt-3 font-display text-2xl sm:text-3xl font-bold text-white">
             {formatARS(totalEgresos)}
           </p>
-          <p className="mt-1 text-xs text-white/50">
-            Pagos a laboratorios e importadores
+          <p className="mt-1 text-xs text-[#DCEBE8]/70">
+            Pagos a fabricantes, distribuidores y fletes
           </p>
         </BentoCard>
 
-        <BentoCard glowColor="cyan">
+        <BentoCard glowColor="cobre">
           <div className="flex items-center justify-between">
-            <span className="text-xs font-semibold text-cyan-300">
+            <span className="font-mono text-xs font-bold uppercase text-[#B9673A]">
               Disponibilidad Neta de Caja
             </span>
-            <Wallet className="h-5 w-5 text-cyan-400" />
+            <Wallet className="h-5 w-5 text-[#B9673A]" />
           </div>
-          <p className="mt-3 text-3xl font-black text-white">
+          <p className="mt-3 font-display text-2xl sm:text-3xl font-bold text-white">
             {formatARS(balanceNeto)}
           </p>
-          <p className="mt-1 text-xs text-white/50">
-            Superávit líquido del período activo
+          <p className="mt-1 text-xs text-[#DCEBE8]/70">
+            Resultado neto operativo del período activo
           </p>
         </BentoCard>
       </div>
 
       {/* Barra de Filtro y Botones de Asiento */}
       <BentoCard className="mb-6">
-        <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
+        <div className="flex flex-col gap-3.5 sm:flex-row sm:items-center sm:justify-between">
           <div className="flex flex-wrap items-center gap-2">
             {(["ALL", "INGRESO", "EGRESO"] as const).map((tf) => (
               <button
                 key={tf}
                 onClick={() => setTipoFiltro(tf)}
-                className={`rounded-xl px-3.5 py-2 text-xs font-bold transition-all ${
+                className={`rounded-lg px-3.5 py-2 text-xs font-bold transition-all ${
                   tipoFiltro === tf
-                    ? "bg-white text-slate-950"
-                    : "border border-white/10 bg-white/[0.03] text-white/65 hover:text-white"
+                    ? "bg-[#B9673A] text-white shadow"
+                    : "border border-[#DCEBE8]/15 bg-[#1D2527]/50 text-[#DCEBE8]/75 hover:text-white"
                 }`}
               >
                 {tf === "ALL"
@@ -215,15 +219,15 @@ export function FinanzasClient({ initialData }: { initialData: ErpSnapshot }) {
             ))}
           </div>
 
-          <div className="flex flex-wrap items-center gap-2.5">
-            <div className="relative">
-              <Search className="pointer-events-none absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-white/40" />
+          <div className="flex flex-wrap items-center gap-2">
+            <div className="relative flex-1 sm:flex-initial">
+              <Search className="pointer-events-none absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-[#DCEBE8]/50" />
               <input
                 type="text"
                 value={search}
                 onChange={(e) => setSearch(e.target.value)}
-                placeholder="Buscar factura, hospital, concepto..."
-                className="rounded-xl border border-white/12 bg-white/[0.04] pl-9 pr-3.5 py-2 text-xs text-white placeholder-white/35 outline-none focus:border-cyan-400"
+                placeholder="Buscar factura, remito, cliente..."
+                className="input-gasa w-full rounded-lg pl-9 pr-3.5 py-2 text-xs outline-none"
               />
             </div>
 
@@ -233,7 +237,7 @@ export function FinanzasClient({ initialData }: { initialData: ErpSnapshot }) {
                 setTipo("INGRESO");
                 setModalOpen(true);
               }}
-              className="inline-flex items-center gap-1.5 rounded-xl border border-emerald-500/40 bg-emerald-500/15 px-3.5 py-2 text-xs font-bold text-emerald-200 hover:bg-emerald-500/25"
+              className="inline-flex items-center gap-1.5 rounded-lg bg-[#1E7F7A] px-3.5 py-2 text-xs font-bold text-white hover:bg-[#1E7F7A]/90"
             >
               <Plus className="h-4 w-4" />
               Asentar Venta
@@ -245,7 +249,7 @@ export function FinanzasClient({ initialData }: { initialData: ErpSnapshot }) {
                 setTipo("EGRESO");
                 setModalOpen(true);
               }}
-              className="inline-flex items-center gap-1.5 rounded-xl border border-rose-500/40 bg-rose-500/15 px-3.5 py-2 text-xs font-bold text-rose-200 hover:bg-rose-500/25"
+              className="inline-flex items-center gap-1.5 rounded-lg bg-[#8C3B4A] px-3.5 py-2 text-xs font-bold text-white hover:bg-[#8C3B4A]/90"
             >
               <Plus className="h-4 w-4" />
               Asentar Compra
@@ -254,12 +258,12 @@ export function FinanzasClient({ initialData }: { initialData: ErpSnapshot }) {
         </div>
       </BentoCard>
 
-      {/* Tabla Libro Diario de Caja */}
+      {/* Tabla Libro Diario de Caja (Desktop) + Tarjetas (Móvil) */}
       <BentoCard className="p-0 overflow-hidden">
-        <div className="overflow-x-auto custom-scroll">
+        <div className="hidden md:block overflow-x-auto custom-scroll">
           <table className="w-full text-left border-collapse">
             <thead>
-              <tr className="border-b border-white/10 bg-white/[0.03] text-[11px] font-semibold uppercase tracking-wider text-white/55">
+              <tr className="border-b border-[#DCEBE8]/15 bg-[#1D2527]/50 font-mono text-[10px] font-bold uppercase tracking-wider text-[#DCEBE8]/75">
                 <th className="py-3.5 px-4">Fecha / Hora</th>
                 <th className="py-3.5 px-4">Tipo</th>
                 <th className="py-3.5 px-4">Comprobante</th>
@@ -269,21 +273,21 @@ export function FinanzasClient({ initialData }: { initialData: ErpSnapshot }) {
                 <th className="py-3.5 px-4 text-right">Acción</th>
               </tr>
             </thead>
-            <tbody className="divide-y divide-white/8 text-xs sm:text-sm">
+            <tbody className="divide-y divide-[#DCEBE8]/12 text-xs">
               {filteredTx.map((tx) => (
                 <tr
                   key={tx.id}
-                  className="transition-colors hover:bg-white/[0.025]"
+                  className="transition-colors hover:bg-white/[0.03]"
                 >
-                  <td className="py-3.5 px-4 text-xs text-white/60 whitespace-nowrap">
+                  <td className="py-3.5 px-4 font-mono text-[11px] text-[#DCEBE8]/70 whitespace-nowrap">
                     {formatDateTimeAR(tx.fecha)}
                   </td>
                   <td className="py-3.5 px-4">
                     <span
-                      className={`inline-flex items-center gap-1 rounded-full px-2.5 py-0.5 text-[10px] font-bold ${
+                      className={`inline-flex items-center gap-1 rounded px-2.5 py-0.5 font-mono text-[10px] font-bold ${
                         tx.tipo === "INGRESO"
-                          ? "bg-emerald-500/15 text-emerald-300 border border-emerald-500/35"
-                          : "bg-rose-500/15 text-rose-300 border border-rose-500/35"
+                          ? "bg-[#1E7F7A]/30 text-[#DCEBE8] border border-[#1E7F7A]"
+                          : "bg-[#8C3B4A]/35 text-white border border-[#8C3B4A]"
                       }`}
                     >
                       {tx.tipo === "INGRESO" ? (
@@ -294,29 +298,23 @@ export function FinanzasClient({ initialData }: { initialData: ErpSnapshot }) {
                       {tx.tipo}
                     </span>
                   </td>
-                  <td className="py-3.5 px-4 font-mono text-xs text-cyan-300">
+                  <td className="py-3.5 px-4 font-mono text-xs text-[#B9673A]">
                     {tx.comprobante || "S/C"}
                   </td>
-                  <td className="py-3.5 px-4 font-medium text-white">
+                  <td className="py-3.5 px-4 font-semibold text-white">
                     {tx.concepto}
                   </td>
-                  <td className="py-3.5 px-4 text-xs text-white/70">
+                  <td className="py-3.5 px-4 text-[#DCEBE8]/80">
                     {tx.entidad?.nombre || "Operación directa"}
                   </td>
-                  <td
-                    className={`py-3.5 px-4 text-right font-mono text-sm font-bold whitespace-nowrap ${
-                      tx.tipo === "INGRESO"
-                        ? "text-emerald-300"
-                        : "text-rose-300"
-                    }`}
-                  >
+                  <td className="py-3.5 px-4 text-right font-mono text-sm font-bold text-white whitespace-nowrap">
                     {tx.tipo === "INGRESO" ? "+" : "-"}
                     {formatARS(tx.monto)}
                   </td>
                   <td className="py-3.5 px-4 text-right">
                     <button
                       onClick={() => handleDeleteTx(tx.id, tx.concepto)}
-                      className="rounded-lg border border-white/10 bg-white/5 p-1.5 text-white/50 hover:border-rose-500/40 hover:bg-rose-500/15 hover:text-rose-200"
+                      className="rounded-lg border border-[#DCEBE8]/15 bg-white/5 p-1.5 text-[#DCEBE8]/70 hover:border-[#8C3B4A] hover:bg-[#8C3B4A]/30 hover:text-white"
                       title="Anular asiento"
                     >
                       <Trash2 className="h-3.5 w-3.5" />
@@ -327,42 +325,78 @@ export function FinanzasClient({ initialData }: { initialData: ErpSnapshot }) {
             </tbody>
           </table>
         </div>
+
+        {/* Vista Móvil */}
+        <div className="md:hidden divide-y divide-[#DCEBE8]/15">
+          {filteredTx.map((tx) => (
+            <div key={tx.id} className="p-4 space-y-2">
+              <div className="flex items-center justify-between">
+                <span
+                  className={`rounded px-2 py-0.5 font-mono text-[10px] font-bold ${
+                    tx.tipo === "INGRESO"
+                      ? "bg-[#1E7F7A] text-white"
+                      : "bg-[#8C3B4A] text-white"
+                  }`}
+                >
+                  {tx.tipo} · {tx.comprobante || "S/C"}
+                </span>
+                <span className="font-mono text-sm font-bold text-white">
+                  {tx.tipo === "INGRESO" ? "+" : "-"}
+                  {formatARS(tx.monto)}
+                </span>
+              </div>
+              <p className="text-xs font-bold text-white">{tx.concepto}</p>
+              <div className="flex items-center justify-between text-[11px] text-[#DCEBE8]/70">
+                <span>{tx.entidad?.nombre || "Operación directa"}</span>
+                <div className="flex items-center gap-2">
+                  <span className="font-mono">{formatDateTimeAR(tx.fecha)}</span>
+                  <button
+                    onClick={() => handleDeleteTx(tx.id, tx.concepto)}
+                    className="text-[#B9673A]"
+                  >
+                    <Trash2 className="h-3.5 w-3.5" />
+                  </button>
+                </div>
+              </div>
+            </div>
+          ))}
+        </div>
       </BentoCard>
 
       {/* Modal Nuevo Asiento Financiero */}
       {modalOpen && (
         <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/80 backdrop-blur-md">
-          <div className="bento-glass w-full max-w-lg rounded-3xl border border-white/15 p-6 sm:p-8 shadow-2xl animate-dialog-in">
-            <div className="flex items-center justify-between border-b border-white/10 pb-4">
+          <div className="bento-glass w-full max-w-lg rounded-2xl border border-[#DCEBE8]/20 p-6 shadow-2xl animate-dialog-in">
+            <div className="flex items-center justify-between border-b border-[#DCEBE8]/15 pb-3.5">
               <div>
-                <h2 className="text-lg font-bold text-white">
+                <h2 className="font-display text-lg font-bold text-white">
                   Registrar Asiento en Flujo de Caja
                 </h2>
-                <p className="text-xs text-white/50">
-                  Impacta inmediatamente en los indicadores del Dashboard
+                <p className="text-xs text-[#DCEBE8]/70">
+                  Impacta inmediatamente en los indicadores del Inicio
                 </p>
               </div>
               <button
                 onClick={() => setModalOpen(false)}
-                className="text-white/50 hover:text-white"
+                className="text-[#DCEBE8]/60 hover:text-white"
               >
                 <X className="h-5 w-5" />
               </button>
             </div>
 
-            <form onSubmit={handleSaveTx} className="mt-5 space-y-4">
+            <form onSubmit={handleSaveTx} className="mt-4 space-y-4">
               <div className="grid grid-cols-2 gap-3">
                 {(["INGRESO", "EGRESO"] as const).map((t) => (
                   <button
                     key={t}
                     type="button"
                     onClick={() => setTipo(t)}
-                    className={`rounded-xl border py-2.5 text-xs font-bold transition-all ${
+                    className={`rounded-lg border py-2.5 text-xs font-bold transition-all ${
                       tipo === t
                         ? t === "INGRESO"
-                          ? "border-emerald-400 bg-emerald-500/20 text-emerald-200"
-                          : "border-rose-400 bg-rose-500/20 text-rose-200"
-                        : "border-white/10 bg-white/5 text-white/55"
+                          ? "border-[#1E7F7A] bg-[#1E7F7A] text-white"
+                          : "border-[#8C3B4A] bg-[#8C3B4A] text-white"
+                        : "border-[#DCEBE8]/15 bg-[#1D2527]/50 text-[#DCEBE8]/70"
                     }`}
                   >
                     {t === "INGRESO"
@@ -372,9 +406,9 @@ export function FinanzasClient({ initialData }: { initialData: ErpSnapshot }) {
                 ))}
               </div>
 
-              <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
+              <div className="grid grid-cols-1 gap-3.5 sm:grid-cols-2">
                 <div>
-                  <label className="mb-1 block text-xs font-medium text-white/70">
+                  <label className="mb-1 block font-mono text-[10px] uppercase text-[#DCEBE8]/80">
                     Monto Total (ARS $)
                   </label>
                   <input
@@ -385,32 +419,32 @@ export function FinanzasClient({ initialData }: { initialData: ErpSnapshot }) {
                     value={monto}
                     onChange={(e) => setMonto(e.target.value)}
                     placeholder="Ej. 485000"
-                    className="w-full rounded-xl border border-white/12 bg-white/5 px-3.5 py-2.5 text-sm text-white outline-none focus:border-cyan-400"
+                    className="input-gasa w-full rounded-lg px-3.5 py-2.5 font-mono text-sm font-bold outline-none"
                   />
                 </div>
 
                 <div>
-                  <label className="mb-1 block text-xs font-medium text-white/70">
-                    N° Factura / Orden de Pago
+                  <label className="mb-1 block font-mono text-[10px] uppercase text-[#DCEBE8]/80">
+                    N° Remito / Factura
                   </label>
                   <input
                     type="text"
                     value={comprobante}
                     onChange={(e) => setComprobante(e.target.value)}
-                    placeholder="FA-0004-00012915"
-                    className="w-full rounded-xl border border-white/12 bg-white/5 px-3.5 py-2.5 text-sm text-white outline-none focus:border-cyan-400"
+                    placeholder="0001-00000125"
+                    className="input-gasa w-full rounded-lg px-3.5 py-2.5 font-mono text-sm outline-none"
                   />
                 </div>
               </div>
 
               <div>
-                <label className="mb-1 block text-xs font-medium text-white/70">
+                <label className="mb-1 block font-mono text-[10px] uppercase text-[#DCEBE8]/80">
                   Cliente o Proveedor Vinculado
                 </label>
                 <select
                   value={entidadId}
                   onChange={(e) => setEntidadId(e.target.value)}
-                  className="w-full rounded-xl border border-white/12 bg-[#0d1017] px-3.5 py-2.5 text-sm text-white outline-none"
+                  className="w-full rounded-lg border border-[#DCEBE8]/25 bg-[#1D2527] px-3.5 py-2.5 text-sm text-white outline-none"
                 >
                   <option value="">— Seleccionar entidad comercial —</option>
                   {initialData.entidades.map((e) => (
@@ -422,7 +456,7 @@ export function FinanzasClient({ initialData }: { initialData: ErpSnapshot }) {
               </div>
 
               <div>
-                <label className="mb-1 block text-xs font-medium text-white/70">
+                <label className="mb-1 block font-mono text-[10px] uppercase text-[#DCEBE8]/80">
                   Concepto / Detalle de Mercadería
                 </label>
                 <input
@@ -430,23 +464,23 @@ export function FinanzasClient({ initialData }: { initialData: ErpSnapshot }) {
                   required
                   value={concepto}
                   onChange={(e) => setConcepto(e.target.value)}
-                  placeholder="Ej. Provisión Pouches ETO y Detergente Trienzimático"
-                  className="w-full rounded-xl border border-white/12 bg-white/5 px-3.5 py-2.5 text-sm text-white outline-none focus:border-cyan-400"
+                  placeholder="Ej. Provisión PT-150 × 6 y GN-M × 10"
+                  className="input-gasa w-full rounded-lg px-3.5 py-2.5 text-sm outline-none"
                 />
               </div>
 
-              <div className="flex justify-end gap-2.5 pt-4 border-t border-white/10">
+              <div className="flex justify-end gap-2.5 pt-3 border-t border-[#DCEBE8]/15">
                 <button
                   type="button"
                   onClick={() => setModalOpen(false)}
-                  className="rounded-xl border border-white/12 px-4 py-2.5 text-xs text-white/70"
+                  className="rounded-lg border border-[#DCEBE8]/20 px-4 py-2 text-xs text-[#DCEBE8]"
                 >
                   Cancelar
                 </button>
                 <button
                   type="submit"
                   disabled={loading}
-                  className="rounded-xl bg-white px-5 py-2.5 text-xs font-bold text-slate-950"
+                  className="rounded-lg bg-[#B9673A] px-5 py-2 text-xs font-bold text-white"
                 >
                   {loading ? "Registrando..." : "Confirmar Asiento"}
                 </button>

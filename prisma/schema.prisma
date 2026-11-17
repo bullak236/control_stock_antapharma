@@ -29,10 +29,24 @@ enum TipoTransaccion {
   EGRESO
 }
 
+model ParametrosErp {
+  id               String   @id @default("default")
+  ivaGeneral       Float    @default(0.21)
+  gastosGenerales  Float    @default(0)
+  redondeoMultiplo Float    @default(10)
+  vigenciaDesde    String   @default("2026-11-10")
+  condiciones      String   @default("Precios en pesos argentinos. Sujetos a modificación sin previo aviso.")
+  contacto         String   @default("antapharma@gmail.com · 385 420-9044 · San Ramón Nonato 5947, Santiago del Estero")
+  notasCatalogo    String   @default("")
+  updatedAt        DateTime @updatedAt
+
+  @@map("erp_parametros")
+}
+
 model Usuario {
   id            String         @id @default(uuid())
   email         String         @unique
-  nombre        String         @default("David - Dirección General")
+  nombre        String         @default("David E. Bulacio Pereyra")
   password_hash String
   rol           RolUsuario     @default(OWNER)
   createdAt     DateTime       @default(now())
@@ -45,6 +59,9 @@ model Categoria {
   id          String     @id @default(uuid())
   nombre      String     @unique
   descripcion String?
+  numeroLinea Int        @default(1)
+  colorHex    String     @default("#B9673A")
+  icono       String     @default("guantes")
   createdAt   DateTime   @default(now())
   productos   Producto[]
 
@@ -52,20 +69,27 @@ model Categoria {
 }
 
 model Producto {
-  id           String            @id @default(uuid())
-  codigo       String            @unique
-  nombre       String
-  medida       String
-  presentacion String
-  stockActual  Int               @default(0)
-  stockMinimo  Int               @default(10)
-  precioCosto  Float             @default(0)
-  precioVenta  Float             @default(0)
-  categoriaId  String
-  categoria    Categoria         @relation(fields: [categoriaId], references: [id], onDelete: Restrict)
-  movimientos  MovimientoStock[]
-  updatedAt    DateTime          @updatedAt
-  createdAt    DateTime          @default(now())
+  id               String            @id @default(uuid())
+  codigo           String            @unique
+  nombre           String
+  medida           String
+  familia          String            @default("General")
+  presentacion     String
+  stockActual      Int               @default(0)
+  stockMinimo      Int               @default(10)
+  precioCosto      Float             @default(0)
+  precioVenta      Float             @default(0)
+  gastosPorcentaje Float?
+  ivaPorcentaje    Float?
+  incluirEnLista   Boolean           @default(true)
+  proveedorNombre  String?
+  fechaCosto       String?           @default("2026-11-10")
+  ordenCatalogo    Int               @default(100)
+  categoriaId      String
+  categoria        Categoria         @relation(fields: [categoriaId], references: [id], onDelete: Restrict)
+  movimientos      MovimientoStock[]
+  updatedAt        DateTime          @updatedAt
+  createdAt        DateTime          @default(now())
 
   @@index([categoriaId])
   @@index([codigo])
@@ -76,10 +100,20 @@ model Entidad {
   id            String                  @id @default(uuid())
   nombre        String
   tipo          TipoEntidad
+  subtipo       String?                 @default("Sanatorio")
   telefono      String
   email         String
   cuit          String?
   direccion     String?
+  markupGeneral Float                   @default(0.40)
+  markupLinea1  Float?
+  markupLinea2  Float?
+  markupLinea3  Float?
+  markupLinea4  Float?
+  markupLinea5  Float?
+  markupLinea6  Float?
+  condicionPago String?                 @default("Contado")
+  notas         String?
   createdAt     DateTime                @default(now())
   movimientos   MovimientoStock[]
   transacciones TransaccionFinanciera[]

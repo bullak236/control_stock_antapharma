@@ -7,6 +7,7 @@ const PROTECTED_PREFIXES = [
   "/entidades",
   "/finanzas",
   "/reportes",
+  "/pami",
 ];
 
 export async function middleware(request: NextRequest) {
@@ -41,5 +42,7 @@ export async function middleware(request: NextRequest) {
 }
 
 export const config = {
-  matcher: ["/((?!_next/static|_next/image|favicon.ico|logo-antapharma.png|manifest.json).*)"],
+  matcher: [
+    "/((?!_next/static|_next/image|favicon.ico|icon.svg|logo-antapharma.png|manifest.json).*)",
+  ],
 };

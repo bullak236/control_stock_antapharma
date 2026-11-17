@@ -14,12 +14,18 @@ import {
   type EntidadDTO,
   type LogAuditoriaDTO,
   type MovimientoStockDTO,
+  type ParametrosErpDTO,
   type ProductoDTO,
   type TipoEntidad,
   type TipoMovimiento,
   type TipoTransaccion,
   type TransaccionFinancieraDTO,
 } from "@/lib/supabase";
+import { DEFAULT_PARAMETROS } from "@/lib/pricing";
+import {
+  CATALOGO_2027_ITEMS,
+  LINEAS_OFICIALES,
+} from "@/lib/catalogo-2027-data";
 
 const DAVID_DEFAULT_ID = "11111111-1111-4111-8111-111111111111";
 
@@ -33,7 +39,11 @@ async function requireServerSession(): Promise<SessionPayload> {
   return session;
 }
 
-async function logAudit(accion: string, detalle: string, usuarioId = DAVID_DEFAULT_ID) {
+async function logAudit(
+  accion: string,
+  detalle: string,
+  usuarioId = DAVID_DEFAULT_ID
+) {
   try {
     const supabase = getSupabaseServerClient();
     await supabase.from("erp_logs_auditoria").insert({
@@ -57,7 +67,10 @@ export async function loginAction(formData: FormData): Promise<{
   const password = String(formData.get("password") || "").trim();
 
   if (!email || !password) {
-    return { ok: false, error: "Ingrese correo electrónico y clave de acceso." };
+    return {
+      ok: false,
+      error: "Ingrese correo electrónico y clave de acceso.",
+    };
   }
 
   const supabase = getSupabaseServerClient();
@@ -69,6 +82,7 @@ export async function loginAction(formData: FormData): Promise<{
 
   const validEmail =
     email === "david@antapharma.com" ||
+    email === "antapharma@gmail.com" ||
     email === "admin@antapharma.com" ||
     Boolean(user);
 
@@ -82,16 +96,17 @@ export async function loginAction(formData: FormData): Promise<{
   if (!validEmail || !validPass) {
     return {
       ok: false,
-      error: "Credenciales inválidas. Acceso restringido a Dirección General.",
+      error:
+        "Credenciales inválidas. Acceso restringido a Dirección Comercial (Antapharma).",
     };
   }
 
   const payload: SessionPayload = {
     userId: user?.id || DAVID_DEFAULT_ID,
-    email: user?.email || "david@antapharma.com",
-    nombre: user?.nombre || "David — Dirección General",
+    email: user?.email || "antapharma@gmail.com",
+    nombre: user?.nombre || "David E. Bulacio Pereyra",
     rol: user?.rol || "OWNER",
-    exp: Date.now() + 1000 * 60 * 60 * 24 * 7, // 7 días
+    exp: Date.now() + 1000 * 60 * 60 * 24 * 7,
   };
 
   const token = await signPayloadEdge(payload);
@@ -105,7 +120,7 @@ export async function loginAction(formData: FormData): Promise<{
 
   await logAudit(
     "INICIO_SESION",
-    `Sesión iniciada por ${payload.email} en consola privada Antapharma ERP`,
+    `Sesión iniciada por ${payload.email} en Antapharma ERP`,
     payload.userId
   );
 
@@ -119,6 +134,7 @@ export async function logoutAction(): Promise<{ ok: boolean }> {
 }
 
 export interface ErpSnapshot {
+  parametros: ParametrosErpDTO;
   categorias: CategoriaDTO[];
   productos: ProductoDTO[];
   entidades: EntidadDTO[];
@@ -140,62 +156,85 @@ export async function getErpSnapshotAction(): Promise<ErpSnapshot> {
 
   const supabase = getSupabaseServerClient();
 
-  const [
-    catRes,
-    prodRes,
-    entRes,
-    movRes,
-    txRes,
-    logRes,
-  ] = await Promise.all([
-    supabase.from("erp_categorias").select("*").order("nombre"),
-    supabase.from("erp_productos").select("*").order("codigo"),
-    supabase.from("erp_entidades").select("*").order("nombre"),
-    supabase
-      .from("erp_movimientos_stock")
-      .select("*")
-      .order("fecha", { ascending: false })
-      .limit(100),
-    supabase
-      .from("erp_transacciones_financieras")
-      .select("*")
-      .order("fecha", { ascending: false })
-      .limit(100),
-    supabase
-      .from("erp_logs_auditoria")
-      .select("*")
-      .order("fecha", { ascending: false })
-      .limit(40),
-  ]);
+  const [paramRes, catRes, prodRes, entRes, movRes, txRes, logRes] =
+    await Promise.all([
+      supabase
+        .from("erp_parametros")
+        .select("*")
+        .eq("id", "default")
+        .maybeSingle(),
+      supabase
+        .from("erp_categorias")
+        .select("*")
+        .order("numeroLinea", { ascending: true }),
+      supabase
+        .from("erp_productos")
+        .select("*")
+        .order("ordenCatalogo", { ascending: true })
+        .order("codigo", { ascending: true }),
+      supabase.from("erp_entidades").select("*").order("nombre"),
+      supabase
+        .from("erp_movimientos_stock")
+        .select("*")
+        .order("fecha", { ascending: false })
+        .limit(100),
+      supabase
+        .from("erp_transacciones_financieras")
+        .select("*")
+        .order("fecha", { ascending: false })
+        .limit(100),
+      supabase
+        .from("erp_logs_auditoria")
+        .select("*")
+        .order("fecha", { ascending: false })
+        .limit(40),
+    ]);
+
+  const parametros: ParametrosErpDTO = paramRes.data
+    ? {
+        ...DEFAULT_PARAMETROS,
+        ...paramRes.data,
+      }
+    : DEFAULT_PARAMETROS;
 
   const categorias = (catRes.data || []) as CategoriaDTO[];
   const catMap = new Map(categorias.map((c) => [c.id, c]));
 
   const productos = ((prodRes.data || []) as ProductoDTO[]).map((p) => ({
     ...p,
+    familia: p.familia || p.medida || "General",
+    incluirEnLista: p.incluirEnLista !== false,
     categoria: catMap.get(p.categoriaId) || null,
   }));
   const prodMap = new Map(productos.map((p) => [p.id, p]));
 
-  const entidades = (entRes.data || []) as EntidadDTO[];
+  const entidades = ((entRes.data || []) as EntidadDTO[]).map((e) => ({
+    ...e,
+    markupGeneral:
+      typeof e.markupGeneral === "number" ? e.markupGeneral : 0.4,
+    condicionPago: e.condicionPago || "Contado",
+  }));
   const entMap = new Map(entidades.map((e) => [e.id, e]));
 
-  const movimientos = ((movRes.data || []) as MovimientoStockDTO[]).map((m) => ({
-    ...m,
-    producto: prodMap.get(m.productoId) || null,
-    entidad: m.entidadId ? entMap.get(m.entidadId) || null : null,
-  }));
-
-  const transacciones = ((txRes.data || []) as TransaccionFinancieraDTO[]).map(
-    (t) => ({
-      ...t,
-      entidad: t.entidadId ? entMap.get(t.entidadId) || null : null,
+  const movimientos = ((movRes.data || []) as MovimientoStockDTO[]).map(
+    (m) => ({
+      ...m,
+      producto: prodMap.get(m.productoId) || null,
+      entidad: m.entidadId ? entMap.get(m.entidadId) || null : null,
     })
   );
+
+  const transacciones = (
+    (txRes.data || []) as TransaccionFinancieraDTO[]
+  ).map((t) => ({
+    ...t,
+    entidad: t.entidadId ? entMap.get(t.entidadId) || null : null,
+  }));
 
   const logs = (logRes.data || []) as LogAuditoriaDTO[];
 
   return {
+    parametros,
     categorias,
     productos,
     entidades,
@@ -203,11 +242,72 @@ export async function getErpSnapshotAction(): Promise<ErpSnapshot> {
     transacciones,
     logs,
     usuarioActual: {
-      nombre: session?.nombre || "David — Dirección General",
-      email: session?.email || "david@antapharma.com",
+      nombre: session?.nombre || "David E. Bulacio Pereyra",
+      email: session?.email || "antapharma@gmail.com",
       rol: session?.rol || "OWNER",
     },
   };
+}
+
+export async function updateParametrosErpAction(input: {
+  ivaGeneral: number;
+  gastosGenerales: number;
+  redondeoMultiplo: number;
+  vigenciaDesde: string;
+  condiciones: string;
+  contacto: string;
+  notasCatalogo: string;
+}): Promise<{ ok: boolean; error?: string }> {
+  try {
+    const session = await requireServerSession();
+    const supabase = getSupabaseServerClient();
+
+    const payload = {
+      id: "default",
+      ivaGeneral: Math.max(0, Number(input.ivaGeneral) || 0.21),
+      gastosGenerales: Math.max(0, Number(input.gastosGenerales) || 0),
+      redondeoMultiplo: Math.max(0.01, Number(input.redondeoMultiplo) || 10),
+      vigenciaDesde: input.vigenciaDesde.trim() || "2026-11-10",
+      condiciones:
+        input.condiciones.trim() ||
+        "Precios en pesos argentinos. Sujetos a modificación sin previo aviso.",
+      contacto:
+        input.contacto.trim() ||
+        "antapharma@gmail.com · 385 420-9044 · San Ramón Nonato 5947, Santiago del Estero",
+      notasCatalogo: input.notasCatalogo.trim(),
+      updatedAt: new Date().toISOString(),
+    };
+
+    const { error } = await supabase
+      .from("erp_parametros")
+      .upsert(payload, { onConflict: "id" });
+
+    if (error) return { ok: false, error: error.message };
+
+    await logAudit(
+      "PARAMETROS_ACTUALIZADOS",
+      `Parámetros de lista actualizados: IVA ${Math.round(
+        payload.ivaGeneral * 100
+      )}% · Gastos ${Math.round(
+        payload.gastosGenerales * 100
+      )}% · Redondeo $${payload.redondeoMultiplo} · Vigencia ${
+        payload.vigenciaDesde
+      }`,
+      session.userId
+    );
+
+    revalidatePath("/dashboard");
+    revalidatePath("/productos");
+    revalidatePath("/entidades");
+    revalidatePath("/reportes");
+    return { ok: true };
+  } catch (err) {
+    return {
+      ok: false,
+      error:
+        err instanceof Error ? err.message : "Error al guardar parámetros",
+    };
+  }
 }
 
 export async function upsertProductoAction(input: {
@@ -215,32 +315,68 @@ export async function upsertProductoAction(input: {
   codigo: string;
   nombre: string;
   medida: string;
+  familia?: string;
   presentacion: string;
   stockActual: number;
   stockMinimo: number;
   precioCosto: number;
   precioVenta: number;
+  gastosPorcentaje?: number | null;
+  ivaPorcentaje?: number | null;
+  incluirEnLista?: boolean;
+  proveedorNombre?: string | null;
+  fechaCosto?: string | null;
   categoriaId: string;
 }): Promise<{ ok: boolean; error?: string }> {
   try {
     const session = await requireServerSession();
     const supabase = getSupabaseServerClient();
 
+    const fam = (input.familia || input.medida || "General").trim();
+    const costo = Math.max(0, Number(input.precioCosto) || 0);
+    const gastos =
+      input.gastosPorcentaje !== undefined &&
+      input.gastosPorcentaje !== null &&
+      !Number.isNaN(Number(input.gastosPorcentaje))
+        ? Number(input.gastosPorcentaje)
+        : null;
+    const iva =
+      input.ivaPorcentaje !== undefined &&
+      input.ivaPorcentaje !== null &&
+      !Number.isNaN(Number(input.ivaPorcentaje))
+        ? Number(input.ivaPorcentaje)
+        : null;
+
+    const ventaSugerida =
+      Number(input.precioVenta) > 0
+        ? Number(input.precioVenta)
+        : Math.round((costo * (1 + (gastos || 0)) * 1.4) / 10) * 10;
+
     const payload = {
       codigo: input.codigo.trim().toUpperCase(),
       nombre: input.nombre.trim(),
-      medida: input.medida.trim(),
+      medida: fam,
+      familia: fam,
       presentacion: input.presentacion.trim(),
       stockActual: Math.max(0, Number(input.stockActual) || 0),
       stockMinimo: Math.max(0, Number(input.stockMinimo) || 0),
-      precioCosto: Math.max(0, Number(input.precioCosto) || 0),
-      precioVenta: Math.max(0, Number(input.precioVenta) || 0),
+      precioCosto: costo,
+      precioVenta: Math.max(0, ventaSugerida),
+      gastosPorcentaje: gastos,
+      ivaPorcentaje: iva,
+      incluirEnLista: input.incluirEnLista !== false,
+      proveedorNombre: input.proveedorNombre?.trim() || null,
+      fechaCosto:
+        input.fechaCosto?.trim() || new Date().toISOString().slice(0, 10),
       categoriaId: input.categoriaId,
       updatedAt: new Date().toISOString(),
     };
 
     if (!payload.codigo || !payload.nombre || !payload.categoriaId) {
-      return { ok: false, error: "Código, nombre y categoría son obligatorios." };
+      return {
+        ok: false,
+        error: "Código, nombre y línea son obligatorios.",
+      };
     }
 
     if (input.id) {
@@ -251,7 +387,7 @@ export async function upsertProductoAction(input: {
       if (error) return { ok: false, error: error.message };
       await logAudit(
         "PRODUCTO_ACTUALIZADO",
-        `Actualizado ${payload.codigo} (${payload.nombre}) — Venta: $${payload.precioVenta} | Stock: ${payload.stockActual}`,
+        `Actualizado ${payload.codigo} (${payload.nombre}) — Costo s/IVA: $${payload.precioCosto} | Stock: ${payload.stockActual}`,
         session.userId
       );
     } else {
@@ -299,7 +435,10 @@ export async function ajustarPrecioMasivoAction(input: {
     const session = await requireServerSession();
     const pct = Number(input.porcentaje);
     if (!pct || Number.isNaN(pct) || pct < -90 || pct > 300) {
-      return { ok: false, error: "Ingrese un porcentaje válido entre -90% y +300%." };
+      return {
+        ok: false,
+        error: "Ingrese un porcentaje válido entre -90% y +300%.",
+      };
     }
 
     const supabase = getSupabaseServerClient();
@@ -310,10 +449,14 @@ export async function ajustarPrecioMasivoAction(input: {
 
     const { data: rows, error } = await query;
     if (error || !rows) {
-      return { ok: false, error: error?.message || "No se pudieron obtener productos." };
+      return {
+        ok: false,
+        error: error?.message || "No se pudieron obtener productos.",
+      };
     }
 
     const factor = 1 + pct / 100;
+    const hoy = new Date().toISOString().slice(0, 10);
     for (const prod of rows) {
       const nuevoCosto = Math.round(Number(prod.precioCosto) * factor);
       const nuevaVenta = Math.round(Number(prod.precioVenta) * factor);
@@ -322,6 +465,7 @@ export async function ajustarPrecioMasivoAction(input: {
         .update({
           precioCosto: nuevoCosto,
           precioVenta: nuevaVenta,
+          fechaCosto: hoy,
           updatedAt: new Date().toISOString(),
         })
         .eq("id", prod.id);
@@ -329,7 +473,9 @@ export async function ajustarPrecioMasivoAction(input: {
 
     await logAudit(
       "AJUSTE_PRECIOS_MASIVO",
-      `Aplicado ajuste del ${pct > 0 ? `+${pct}` : pct}% sobre ${rows.length} insumos médicos`,
+      `Aplicado ajuste del ${pct > 0 ? `+${pct}` : pct}% sobre ${
+        rows.length
+      } insumos médicos`,
       session.userId
     );
 
@@ -357,7 +503,10 @@ export async function deleteProductoAction(
       .eq("id", id)
       .maybeSingle();
 
-    const { error } = await supabase.from("erp_productos").delete().eq("id", id);
+    const { error } = await supabase
+      .from("erp_productos")
+      .delete()
+      .eq("id", id);
     if (error) return { ok: false, error: error.message };
 
     await logAudit(
@@ -391,7 +540,8 @@ export async function registrarMovimientoStockAction(input: {
     if (!input.productoId || cantidad <= 0 || !input.motivo.trim()) {
       return {
         ok: false,
-        error: "Seleccione un producto, cantidad mayor a 0 y motivo del movimiento.",
+        error:
+          "Seleccione un producto, cantidad mayor a 0 y motivo del movimiento.",
       };
     }
 
@@ -428,14 +578,16 @@ export async function registrarMovimientoStockAction(input: {
 
     if (updErr) return { ok: false, error: updErr.message };
 
-    const { error: movErr } = await supabase.from("erp_movimientos_stock").insert({
-      tipo: input.tipo,
-      cantidad,
-      motivo: input.motivo.trim(),
-      productoId: prod.id,
-      entidadId: input.entidadId || null,
-      fecha: new Date().toISOString(),
-    });
+    const { error: movErr } = await supabase
+      .from("erp_movimientos_stock")
+      .insert({
+        tipo: input.tipo,
+        cantidad,
+        motivo: input.motivo.trim(),
+        productoId: prod.id,
+        entidadId: input.entidadId || null,
+        fecha: new Date().toISOString(),
+      });
 
     if (movErr) return { ok: false, error: movErr.message };
 
@@ -452,7 +604,8 @@ export async function registrarMovimientoStockAction(input: {
   } catch (err) {
     return {
       ok: false,
-      error: err instanceof Error ? err.message : "Error al registrar movimiento",
+      error:
+        err instanceof Error ? err.message : "Error al registrar movimiento",
     };
   }
 }
@@ -460,22 +613,24 @@ export async function registrarMovimientoStockAction(input: {
 export async function crearCategoriaAction(input: {
   nombre: string;
   descripcion?: string;
+  colorHex?: string;
 }): Promise<{ ok: boolean; error?: string }> {
   try {
     const session = await requireServerSession();
     if (!input.nombre.trim()) {
-      return { ok: false, error: "El nombre de la categoría es obligatorio." };
+      return { ok: false, error: "El nombre de la línea es obligatorio." };
     }
     const supabase = getSupabaseServerClient();
     const { error } = await supabase.from("erp_categorias").insert({
       nombre: input.nombre.trim(),
       descripcion: input.descripcion?.trim() || null,
+      colorHex: input.colorHex || "#0F3A40",
     });
     if (error) return { ok: false, error: error.message };
 
     await logAudit(
-      "CATEGORIA_CREADA",
-      `Nueva categoría de esterilización: ${input.nombre.trim()}`,
+      "LINEA_CREADA",
+      `Nueva línea de catálogo: ${input.nombre.trim()}`,
       session.userId
     );
 
@@ -484,7 +639,7 @@ export async function crearCategoriaAction(input: {
   } catch (err) {
     return {
       ok: false,
-      error: err instanceof Error ? err.message : "Error al crear categoría",
+      error: err instanceof Error ? err.message : "Error al crear línea",
     };
   }
 }
@@ -493,10 +648,20 @@ export async function upsertEntidadAction(input: {
   id?: string;
   nombre: string;
   tipo: TipoEntidad;
+  subtipo?: string;
   telefono: string;
   email: string;
   cuit?: string;
   direccion?: string;
+  markupGeneral?: number;
+  markupLinea1?: number | null;
+  markupLinea2?: number | null;
+  markupLinea3?: number | null;
+  markupLinea4?: number | null;
+  markupLinea5?: number | null;
+  markupLinea6?: number | null;
+  condicionPago?: string;
+  notas?: string;
 }): Promise<{ ok: boolean; error?: string }> {
   try {
     const session = await requireServerSession();
@@ -507,14 +672,34 @@ export async function upsertEntidadAction(input: {
       };
     }
 
+    const parseOptionalMarkup = (val?: number | null) => {
+      if (val === undefined || val === null || Number.isNaN(Number(val)) || Number(val) <= 0) {
+        return null;
+      }
+      return Number(val);
+    };
+
     const supabase = getSupabaseServerClient();
     const payload = {
       nombre: input.nombre.trim(),
       tipo: input.tipo,
+      subtipo: input.subtipo?.trim() || (input.tipo === "CLIENTE" ? "Sanatorio" : "Laboratorio"),
       telefono: input.telefono.trim(),
       email: input.email.trim(),
       cuit: input.cuit?.trim() || null,
       direccion: input.direccion?.trim() || null,
+      markupGeneral:
+        typeof input.markupGeneral === "number" && !Number.isNaN(input.markupGeneral)
+          ? Math.max(0, input.markupGeneral)
+          : 0.4,
+      markupLinea1: parseOptionalMarkup(input.markupLinea1),
+      markupLinea2: parseOptionalMarkup(input.markupLinea2),
+      markupLinea3: parseOptionalMarkup(input.markupLinea3),
+      markupLinea4: parseOptionalMarkup(input.markupLinea4),
+      markupLinea5: parseOptionalMarkup(input.markupLinea5),
+      markupLinea6: parseOptionalMarkup(input.markupLinea6),
+      condicionPago: input.condicionPago?.trim() || "Contado",
+      notas: input.notas?.trim() || null,
     };
 
     if (input.id) {
@@ -525,7 +710,9 @@ export async function upsertEntidadAction(input: {
       if (error) return { ok: false, error: error.message };
       await logAudit(
         "ENTIDAD_ACTUALIZADA",
-        `Actualizado ${payload.tipo}: ${payload.nombre}`,
+        `Actualizado ${payload.tipo}: ${payload.nombre} (Markup general: ${Math.round(
+          payload.markupGeneral * 100
+        )}%)`,
         session.userId
       );
     } else {
@@ -538,6 +725,7 @@ export async function upsertEntidadAction(input: {
       );
     }
 
+    revalidatePath("/dashboard");
     revalidatePath("/entidades");
     revalidatePath("/finanzas");
     revalidatePath("/productos");
@@ -557,7 +745,10 @@ export async function deleteEntidadAction(
   try {
     const session = await requireServerSession();
     const supabase = getSupabaseServerClient();
-    const { error } = await supabase.from("erp_entidades").delete().eq("id", id);
+    const { error } = await supabase
+      .from("erp_entidades")
+      .delete()
+      .eq("id", id);
     if (error) return { ok: false, error: error.message };
 
     await logAudit(
@@ -595,14 +786,16 @@ export async function registrarTransaccionFinancieraAction(input: {
     }
 
     const supabase = getSupabaseServerClient();
-    const { error } = await supabase.from("erp_transacciones_financieras").insert({
-      tipo: input.tipo,
-      monto,
-      concepto: input.concepto.trim(),
-      comprobante: input.comprobante?.trim() || null,
-      entidadId: input.entidadId || null,
-      fecha: new Date().toISOString(),
-    });
+    const { error } = await supabase
+      .from("erp_transacciones_financieras")
+      .insert({
+        tipo: input.tipo,
+        monto,
+        concepto: input.concepto.trim(),
+        comprobante: input.comprobante?.trim() || null,
+        entidadId: input.entidadId || null,
+        fecha: new Date().toISOString(),
+      });
 
     if (error) return { ok: false, error: error.message };
 
@@ -619,7 +812,8 @@ export async function registrarTransaccionFinancieraAction(input: {
   } catch (err) {
     return {
       ok: false,
-      error: err instanceof Error ? err.message : "Error al registrar transacción",
+      error:
+        err instanceof Error ? err.message : "Error al registrar transacción",
     };
   }
 }
@@ -650,6 +844,77 @@ export async function deleteTransaccionFinancieraAction(
     return {
       ok: false,
       error: err instanceof Error ? err.message : "Error al eliminar asiento",
+    };
+  }
+}
+
+export async function sincronizarCatalogo2027Action(): Promise<{
+  ok: boolean;
+  total?: number;
+  error?: string;
+}> {
+  try {
+    const session = await requireServerSession();
+    const supabase = getSupabaseServerClient();
+
+    for (const l of LINEAS_OFICIALES) {
+      await supabase.from("erp_categorias").upsert(
+        {
+          id: l.id,
+          nombre: l.nombre,
+          descripcion: l.descripcion,
+          numeroLinea: l.numero,
+          colorHex: l.colorHex,
+          icono: l.icono,
+        },
+        { onConflict: "id" }
+      );
+    }
+
+    const rows = CATALOGO_2027_ITEMS.map((item) => {
+      const linea =
+        LINEAS_OFICIALES.find((l) => l.numero === item.lineaNumero) ||
+        LINEAS_OFICIALES[0];
+      const precioSinIva = Math.round((item.costoSugerido * 1.4) / 10) * 10;
+      return {
+        codigo: item.codigo,
+        nombre: item.nombre,
+        medida: item.familia,
+        familia: item.familia,
+        presentacion: item.presentacion,
+        stockActual: item.stockInicial,
+        stockMinimo: item.stockMinimo,
+        precioCosto: item.costoSugerido,
+        precioVenta: precioSinIva,
+        incluirEnLista: true,
+        proveedorNombre: item.proveedor,
+        fechaCosto: "2026-11-10",
+        ordenCatalogo: item.orden,
+        categoriaId: linea.id,
+        updatedAt: new Date().toISOString(),
+      };
+    });
+
+    const { error } = await supabase
+      .from("erp_productos")
+      .upsert(rows, { onConflict: "codigo" });
+    if (error) return { ok: false, error: error.message };
+
+    await logAudit(
+      "CATALOGO_2027_SINCRONIZADO",
+      `Sincronizadas las 6 líneas oficiales y ${rows.length} presentaciones del Catálogo 2027`,
+      session.userId
+    );
+
+    revalidatePath("/dashboard");
+    revalidatePath("/productos");
+    revalidatePath("/reportes");
+    return { ok: true, total: rows.length };
+  } catch (err) {
+    return {
+      ok: false,
+      error:
+        err instanceof Error ? err.message : "Error al sincronizar catálogo",
     };
   }
 }

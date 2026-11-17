@@ -1,24 +1,40 @@
 "use client";
 
-import { useState } from "react";
+import { useMemo, useState } from "react";
 import {
   FileText,
   FileSpreadsheet,
   Download,
   CheckCircle2,
-  BarChart3,
-  Layers,
   ShieldCheck,
+  Calculator,
 } from "lucide-react";
 import { ErpShell } from "@/components/layout/erp-shell";
 import { BentoCard } from "@/components/ui/bento-card";
 import { VercelTabs } from "@/components/ui/vercel-tabs";
+import { CatalogoShareHub } from "@/components/erp/catalogo-share-modal";
+import {
+  generarCatalogo2027PDF,
+  generarListaPreciosClientePDF,
+  generarPlanillaInternaExcel,
+} from "@/lib/document-generators";
+import { getLineColorHex } from "@/components/brand/antapharma-brand";
 import type { ErpSnapshot } from "@/app/actions/erp-actions";
 import { formatARS, formatDateTimeAR } from "@/lib/utils";
 
 export function ReportesClient({ initialData }: { initialData: ErpSnapshot }) {
   const [exportStatus, setExportStatus] = useState<string | null>(null);
   const [catFiltro, setCatFiltro] = useState("ALL");
+
+  const clientes = useMemo(
+    () => initialData.entidades.filter((e) => e.tipo === "CLIENTE"),
+    [initialData.entidades]
+  );
+  const [clienteId, setClienteId] = useState<string>(clientes[0]?.id || "");
+  const clienteElegido = useMemo(
+    () => clientes.find((c) => c.id === clienteId) || clientes[0] || null,
+    [clientes, clienteId]
+  );
 
   const criticalCount = initialData.productos.filter(
     (p) => p.stockActual <= p.stockMinimo
@@ -29,144 +45,60 @@ export function ReportesClient({ initialData }: { initialData: ErpSnapshot }) {
       ? initialData.productos
       : initialData.productos.filter((p) => p.categoriaId === catFiltro);
 
-  // 1. Generar Catálogo (PDF) con jsPDF + autoTable
+  // 1. Generar Catálogo 2027 Oficial (PDF A4 Vertical sin precios)
   async function handleExportCatalogoPDF() {
-    const { jsPDF } = await import("jspdf");
-    const autoTable = (await import("jspdf-autotable")).default;
-
-    const doc = new jsPDF({ orientation: "landscape", unit: "mm", format: "a4" });
-
-    doc.setFillColor(7, 10, 18);
-    doc.rect(0, 0, 297, 32, "F");
-
-    doc.setTextColor(255, 255, 255);
-    doc.setFontSize(16);
-    doc.text(
-      "ANTAPHARMA DISTRIBUIDORA — CATALOGO OFICIAL DE INSUMOS",
-      14,
-      14
+    await generarCatalogo2027PDF(productosFiltrados, { download: true });
+    setExportStatus(
+      "Catálogo Oficial de Productos 2027 (PDF A4 vertical, sin precios) generado y descargado."
     );
+  }
 
-    doc.setFontSize(10);
-    doc.setTextColor(56, 189, 248);
-    doc.text(
-      `Division Esterilizacion Medica • Emision: ${new Date().toLocaleDateString("es-AR")} • Direccion General (David)`,
-      14,
-      23
-    );
-
-    const rows = productosFiltrados.map((p) => [
-      p.codigo,
-      p.nombre,
-      p.categoria?.nombre || "General",
-      p.medida,
-      p.presentacion,
-      `${p.stockActual} u.`,
-      formatARS(p.precioCosto),
-      formatARS(p.precioVenta),
-    ]);
-
-    autoTable(doc, {
-      startY: 38,
-      head: [
-        [
-          "Codigo SKU",
-          "Insumo de Esterilizacion",
-          "Categoria",
-          "Medida",
-          "Presentacion",
-          "Stock",
-          "Costo",
-          "Precio Lista",
-        ],
-      ],
-      body: rows,
-      styles: { fontSize: 9, cellPadding: 3 },
-      headStyles: { fillColor: [14, 116, 144], textColor: 255 },
-      alternateRowStyles: { fillColor: [245, 247, 250] },
+  // 2. Generar Lista de Precios por Cliente (PDF A4 sin costos)
+  async function handleExportListaClientePDF() {
+    await generarListaPreciosClientePDF({
+      productos: initialData.productos,
+      cliente: clienteElegido,
+      parametros: initialData.parametros,
+      lineaFiltro: catFiltro,
+      download: true,
     });
-
-    doc.save(`Antapharma_Catalogo_Esterilizacion_${new Date().toISOString().slice(0, 10)}.pdf`);
-    setExportStatus("Catálogo PDF generado y descargado correctamente.");
+    setExportStatus(
+      `Lista de Precios PDF emitida para "${
+        clienteElegido?.nombre || "General"
+      }" (costos protegidos).`
+    );
   }
 
-  // 2. Exportar Ventas y Balance (XLSX) con SheetJS
-  async function handleExportVentasXLSX() {
-    const XLSX = await import("xlsx");
-
-    const ventasRows = initialData.transacciones.map((t) => ({
-      Fecha: formatDateTimeAR(t.fecha),
-      Tipo: t.tipo,
-      Comprobante: t.comprobante || "S/C",
-      Concepto: t.concepto,
-      Entidad: t.entidad?.nombre || "Directo",
-      Tipo_Entidad: t.entidad?.tipo || "—",
-      Monto_ARS: t.monto,
-    }));
-
-    const inventarioRows = initialData.productos.map((p) => ({
-      Codigo: p.codigo,
-      Insumo: p.nombre,
-      Categoria: p.categoria?.nombre || "General",
-      Medida: p.medida,
-      Presentacion: p.presentacion,
-      Stock_Actual: p.stockActual,
-      Stock_Minimo: p.stockMinimo,
-      Estado: p.stockActual <= p.stockMinimo ? "CRITICO" : "OPTIMO",
-      Precio_Costo_ARS: p.precioCosto,
-      Precio_Venta_ARS: p.precioVenta,
-      Valor_Stock_Venta_ARS: p.stockActual * p.precioVenta,
-    }));
-
-    const kardexRows = initialData.movimientos.map((m) => ({
-      Fecha: formatDateTimeAR(m.fecha),
-      Movimiento: m.tipo,
-      Codigo: m.producto?.codigo || "—",
-      Insumo: m.producto?.nombre || "—",
-      Cantidad: m.cantidad,
-      Entidad: m.entidad?.nombre || "—",
-      Motivo: m.motivo,
-    }));
-
-    const wb = XLSX.utils.book_new();
-    XLSX.utils.book_append_sheet(
-      wb,
-      XLSX.utils.json_to_sheet(ventasRows),
-      "Flujo_Ventas_Compras"
+  // 3. Exportar Planilla Interna Completa Excel (5 Hojas: Inicio, Productos, Clientes, Lista de precios, Análisis interno)
+  async function handleExportPlanillaInternaXLSX() {
+    await generarPlanillaInternaExcel({
+      productos: initialData.productos,
+      entidades: initialData.entidades,
+      clienteSeleccionado: clienteElegido,
+      parametros: initialData.parametros,
+      movimientos: initialData.movimientos,
+      transacciones: initialData.transacciones,
+    });
+    setExportStatus(
+      "Planilla Interna Excel (.XLSX) descargada con las 5 hojas oficiales (Inicio, Productos, Clientes, Lista de precios y Análisis interno)."
     );
-    XLSX.utils.book_append_sheet(
-      wb,
-      XLSX.utils.json_to_sheet(inventarioRows),
-      "Inventario_Actual"
-    );
-    XLSX.utils.book_append_sheet(
-      wb,
-      XLSX.utils.json_to_sheet(kardexRows),
-      "Kardex_Trazabilidad"
-    );
-
-    XLSX.writeFile(
-      wb,
-      `Antapharma_Ventas_e_Inventario_${new Date().toISOString().slice(0, 10)}.xlsx`
-    );
-    setExportStatus("Libro Excel (.XLSX) con 3 hojas contables descargado.");
   }
 
-  // 3. Descargar CSV con PapaParse
+  // 4. Descargar CSV plano
   async function handleExportCSV() {
     const Papa = (await import("papaparse")).default;
 
     const data = productosFiltrados.map((p) => ({
       codigo: p.codigo,
-      nombre: p.nombre,
-      categoria: p.categoria?.nombre || "General",
-      medida: p.medida,
+      linea: p.categoria?.nombre || "Descartables",
+      familia: p.familia || p.medida,
+      producto: p.nombre,
       presentacion: p.presentacion,
       stock_actual: p.stockActual,
       stock_minimo: p.stockMinimo,
-      precio_costo: p.precioCosto,
-      precio_venta: p.precioVenta,
-      valorizado_venta: p.stockActual * p.precioVenta,
+      costo_sin_iva: p.precioCosto,
+      precio_sin_iva: p.precioVenta,
+      proveedor: p.proveedorNombre || "",
     }));
 
     const csv = Papa.unparse(data, { delimiter: ";" });
@@ -176,13 +108,15 @@ export function ReportesClient({ initialData }: { initialData: ErpSnapshot }) {
     const url = URL.createObjectURL(blob);
     const link = document.createElement("a");
     link.href = url;
-    link.download = `Antapharma_Datos_${new Date().toISOString().slice(0, 10)}.csv`;
+    link.download = `Antapharma_Catalogo_Datos_${new Date()
+      .toISOString()
+      .slice(0, 10)}.csv`;
     link.click();
     URL.revokeObjectURL(url);
-    setExportStatus("Archivo CSV plano descargado con codificación UTF-8.");
+    setExportStatus("Archivo CSV descargado con codificación UTF-8.");
   }
 
-  const resumenCategorias = initialData.categorias.map((c) => {
+  const resumenCategorias = initialData.categorias.map((c, idx) => {
     const items = initialData.productos.filter((p) => p.categoriaId === c.id);
     const unidades = items.reduce((a, b) => a + b.stockActual, 0);
     const valorVenta = items.reduce(
@@ -196,6 +130,8 @@ export function ReportesClient({ initialData }: { initialData: ErpSnapshot }) {
     const criticos = items.filter((p) => p.stockActual <= p.stockMinimo).length;
     return {
       ...c,
+      numeroLinea: c.numeroLinea || idx + 1,
+      colorHex: c.colorHex || getLineColorHex(c.numeroLinea || idx + 1),
       referencias: items.length,
       unidades,
       valorVenta,
@@ -206,94 +142,131 @@ export function ReportesClient({ initialData }: { initialData: ErpSnapshot }) {
 
   return (
     <ErpShell
-      title="Centro de Reportes & Exportación"
-      subtitle="Cruce de indicadores de inventario, auditoría y emisión de documentos en PDF, Excel y CSV"
+      title="Reportes, Catálogo 2027 & Planilla Interna"
+      subtitle="Emisión documental en PDF (Catálogo y Lista por Cliente), Planilla Excel de 5 hojas y envío por WhatsApp/Mail"
       criticalCount={criticalCount}
     >
       {exportStatus && (
-        <div className="mb-6 flex items-center justify-between rounded-2xl border border-cyan-400/35 bg-cyan-500/10 px-4 py-3 text-xs text-cyan-200">
-          <span className="flex items-center gap-2 font-medium">
-            <CheckCircle2 className="h-4 w-4 text-cyan-300" />
+        <div className="mb-5 flex items-center justify-between rounded-xl border border-[#1E7F7A] bg-[#1E7F7A]/20 px-4 py-3 text-xs text-white">
+          <span className="flex items-center gap-2 font-semibold">
+            <CheckCircle2 className="h-4 w-4 text-[#B9673A]" />
             {exportStatus}
           </span>
           <button
             onClick={() => setExportStatus(null)}
-            className="text-white/60 hover:text-white"
+            className="text-[#DCEBE8]/70 hover:text-white"
           >
             Cerrar
           </button>
         </div>
       )}
 
-      {/* Panel Principal de Exportación (Los 3 botones requeridos) */}
-      <BentoCard glowColor="cyan" className="mb-6">
-        <div className="flex flex-col gap-5 lg:flex-row lg:items-center lg:justify-between">
-          <div>
-            <span className="inline-flex items-center gap-1.5 rounded-full border border-cyan-400/30 bg-cyan-500/10 px-3 py-0.5 text-[11px] font-semibold text-cyan-300">
-              Motor de Exportación Documental
-            </span>
-            <h2 className="mt-2 text-lg sm:text-xl font-bold text-white">
-              Emisión Instantánea de Catálogo y Balances
-            </h2>
-            <p className="mt-1 text-xs text-white/55 max-w-2xl">
-              Seleccione una categoría específica o exporte el padrón completo de
-              insumos de esterilización médica y asientos financieros.
-            </p>
+      {/* Hub de envío directo por WhatsApp y Mail */}
+      <div className="mb-6">
+        <CatalogoShareHub
+          productos={initialData.productos}
+          entidades={initialData.entidades}
+          parametros={initialData.parametros}
+        />
+      </div>
 
-            <div className="mt-4 flex flex-wrap items-center gap-3">
-              <label className="text-xs font-medium text-white/70">
-                Filtrar alcance de catálogo:
-              </label>
+      {/* Panel de Exportación de Entregables Oficiales (Manual Pág. 20) */}
+      <BentoCard glowColor="quirofano" className="mb-6">
+        <div className="flex flex-col gap-5">
+          <div className="flex flex-wrap items-center justify-between gap-4 border-b border-[#DCEBE8]/15 pb-4">
+            <div>
+              <span className="font-mono text-[10px] uppercase tracking-widest text-[#B9673A] font-bold">
+                ENTREGABLES OFICIALES ANTAPHARMA (MANUAL V1.1 · PÁG. 20)
+              </span>
+              <h2 className="mt-1 font-display text-lg sm:text-xl font-bold text-white">
+                Emisión de Catálogo 2027, Lista por Cliente y Planilla Interna
+              </h2>
+            </div>
+
+            <div className="flex flex-wrap items-center gap-2.5">
+              <select
+                value={clienteId}
+                onChange={(e) => setClienteId(e.target.value)}
+                className="rounded-lg border border-[#DCEBE8]/25 bg-[#1D2527] px-3 py-2 text-xs font-bold text-white outline-none"
+              >
+                {clientes.map((c) => (
+                  <option key={c.id} value={c.id}>
+                    Cliente: {c.nombre} (
+                    {Math.round((c.markupGeneral ?? 0.4) * 100)}%)
+                  </option>
+                ))}
+              </select>
+
               <select
                 value={catFiltro}
                 onChange={(e) => setCatFiltro(e.target.value)}
-                className="rounded-xl border border-white/15 bg-[#0d1017] px-3.5 py-2 text-xs text-white outline-none focus:border-cyan-400"
+                className="rounded-lg border border-[#DCEBE8]/25 bg-[#1D2527] px-3 py-2 text-xs text-white outline-none"
               >
                 <option value="ALL">
-                  Todas las categorías ({initialData.productos.length} insumos)
+                  Todas las líneas ({initialData.productos.length} productos)
                 </option>
                 {initialData.categorias.map((c) => (
                   <option key={c.id} value={c.id}>
-                    {c.nombre}
+                    0{c.numeroLinea || ""} · {c.nombre}
                   </option>
                 ))}
               </select>
             </div>
           </div>
 
-          <div className="grid grid-cols-1 gap-3 sm:grid-cols-3">
+          <div className="grid grid-cols-1 gap-3 sm:grid-cols-2 lg:grid-cols-4">
             <button
               type="button"
               onClick={handleExportCatalogoPDF}
-              className="group flex flex-col items-start justify-between rounded-2xl border border-rose-500/35 bg-gradient-to-br from-rose-500/20 via-rose-500/5 to-transparent p-4 text-left transition-all hover:scale-[1.02] hover:border-rose-400"
+              className="group flex flex-col items-start justify-between rounded-xl border border-[#B9673A]/50 bg-[#B9673A]/15 p-4 text-left transition-all hover:bg-[#B9673A]/25"
             >
-              <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-rose-500/20 text-rose-300 mb-3">
+              <div className="flex h-10 w-10 items-center justify-center rounded-lg bg-[#B9673A] text-white mb-3">
                 <FileText className="h-5 w-5" />
               </div>
               <div>
-                <p className="text-xs font-bold text-white">
-                  Generar Catálogo (PDF)
+                <p className="font-display text-sm font-bold text-white">
+                  Catálogo 2027 (PDF A4)
                 </p>
-                <p className="mt-0.5 text-[11px] text-white/50">
-                  Lista oficial con medidas y PVP
+                <p className="mt-0.5 text-[11px] text-[#DCEBE8]/75">
+                  Tapa + 6 líneas + contratapa. Sin precios. Apto WhatsApp.
                 </p>
               </div>
             </button>
 
             <button
               type="button"
-              onClick={handleExportVentasXLSX}
-              className="group flex flex-col items-start justify-between rounded-2xl border border-emerald-500/35 bg-gradient-to-br from-emerald-500/20 via-emerald-500/5 to-transparent p-4 text-left transition-all hover:scale-[1.02] hover:border-emerald-400"
+              onClick={handleExportListaClientePDF}
+              className="group flex flex-col items-start justify-between rounded-xl border border-[#1E7F7A]/60 bg-[#1E7F7A]/20 p-4 text-left transition-all hover:bg-[#1E7F7A]/30"
             >
-              <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-emerald-500/20 text-emerald-300 mb-3">
+              <div className="flex h-10 w-10 items-center justify-center rounded-lg bg-[#1E7F7A] text-white mb-3">
+                <Calculator className="h-5 w-5" />
+              </div>
+              <div>
+                <p className="font-display text-sm font-bold text-white">
+                  Lista por Cliente (PDF)
+                </p>
+                <p className="mt-0.5 text-[11px] text-[#DCEBE8]/75">
+                  Precio s/IVA, IVA y Final para{" "}
+                  {clienteElegido?.nombre || "cliente"}. Sin costos.
+                </p>
+              </div>
+            </button>
+
+            <button
+              type="button"
+              onClick={handleExportPlanillaInternaXLSX}
+              className="group flex flex-col items-start justify-between rounded-xl border border-[#C8952B]/50 bg-[#C8952B]/15 p-4 text-left transition-all hover:bg-[#C8952B]/25"
+            >
+              <div className="flex h-10 w-10 items-center justify-center rounded-lg bg-[#C8952B] text-white mb-3">
                 <FileSpreadsheet className="h-5 w-5" />
               </div>
               <div>
-                <p className="text-xs font-bold text-white">
-                  Exportar Ventas (XLSX)
+                <p className="font-display text-sm font-bold text-white">
+                  Planilla Interna (XLSX)
                 </p>
-                <p className="mt-0.5 text-[11px] text-white/50">
-                  Excel multi-hoja + Kardex
+                <p className="mt-0.5 text-[11px] text-[#DCEBE8]/75">
+                  Las 5 hojas del Excel (Inicio, Productos, Clientes, Lista y
+                  Análisis).
                 </p>
               </div>
             </button>
@@ -301,15 +274,17 @@ export function ReportesClient({ initialData }: { initialData: ErpSnapshot }) {
             <button
               type="button"
               onClick={handleExportCSV}
-              className="group flex flex-col items-start justify-between rounded-2xl border border-cyan-500/35 bg-gradient-to-br from-cyan-500/20 via-cyan-500/5 to-transparent p-4 text-left transition-all hover:scale-[1.02] hover:border-cyan-400"
+              className="group flex flex-col items-start justify-between rounded-xl border border-[#DCEBE8]/25 bg-[#1D2527]/50 p-4 text-left transition-all hover:bg-[#1D2527]/80"
             >
-              <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-cyan-500/20 text-cyan-300 mb-3">
+              <div className="flex h-10 w-10 items-center justify-center rounded-lg bg-[#55656A] text-white mb-3">
                 <Download className="h-5 w-5" />
               </div>
               <div>
-                <p className="text-xs font-bold text-white">Descargar CSV</p>
-                <p className="mt-0.5 text-[11px] text-white/50">
-                  Datos planos separados por ;
+                <p className="font-display text-sm font-bold text-white">
+                  Exportar Datos (CSV)
+                </p>
+                <p className="mt-0.5 text-[11px] text-[#DCEBE8]/75">
+                  Padrón de 154 códigos separado por punto y coma (;).
                 </p>
               </div>
             </button>
@@ -317,61 +292,86 @@ export function ReportesClient({ initialData }: { initialData: ErpSnapshot }) {
         </div>
       </BentoCard>
 
-      {/* Cruce de Datos con VercelTabs de OpenHero */}
+      {/* Matriz por Línea + Kardex + Auditoría */}
       <BentoCard>
         <VercelTabs
           tabs={[
             {
               value: "categorias",
-              label: "Matriz por Categoría de Insumos",
+              label: "Matriz por las 6 Líneas Oficiales",
               badge: resumenCategorias.length,
               content: (
                 <div className="overflow-x-auto custom-scroll">
                   <table className="w-full text-left border-collapse">
                     <thead>
-                      <tr className="border-b border-white/10 text-[11px] font-semibold uppercase tracking-wider text-white/55">
-                        <th className="py-3 px-4">Categoría Técnica</th>
-                        <th className="py-3 px-4 text-center">Referencias</th>
-                        <th className="py-3 px-4 text-center">Unidades Totales</th>
-                        <th className="py-3 px-4 text-center">Alertas Críticas</th>
-                        <th className="py-3 px-4 text-right">Valor Costo</th>
-                        <th className="py-3 px-4 text-right">Valor Venta (PVP)</th>
-                        <th className="py-3 px-4 text-right">Utilidad Potencial</th>
+                      <tr className="border-b border-[#DCEBE8]/15 font-mono text-[10px] font-bold uppercase tracking-wider text-[#DCEBE8]/75">
+                        <th className="py-3 px-4">Línea Oficial</th>
+                        <th className="py-3 px-4 text-center">Presentaciones</th>
+                        <th className="py-3 px-4 text-center">
+                          Unidades Totales
+                        </th>
+                        <th className="py-3 px-4 text-center">
+                          Alertas Críticas
+                        </th>
+                        <th className="py-3 px-4 text-right">
+                          Valor Costo s/IVA
+                        </th>
+                        <th className="py-3 px-4 text-right">
+                          Valor Lista s/IVA
+                        </th>
+                        <th className="py-3 px-4 text-right">
+                          Ganancia Potencial
+                        </th>
                       </tr>
                     </thead>
-                    <tbody className="divide-y divide-white/8 text-xs sm:text-sm">
+                    <tbody className="divide-y divide-[#DCEBE8]/12 text-xs">
                       {resumenCategorias.map((rc) => (
-                        <tr key={rc.id} className="hover:bg-white/[0.02]">
+                        <tr
+                          key={rc.id}
+                          className="hover:bg-white/[0.03] transition-colors"
+                        >
                           <td className="py-3.5 px-4">
-                            <p className="font-bold text-white">{rc.nombre}</p>
-                            <p className="text-xs text-white/45">
-                              {rc.descripcion}
-                            </p>
+                            <div className="flex items-center gap-2.5">
+                              <span
+                                style={{ backgroundColor: rc.colorHex }}
+                                className="rounded px-2 py-0.5 font-mono text-[10px] font-bold text-white"
+                              >
+                                0{rc.numeroLinea}
+                              </span>
+                              <div>
+                                <p className="font-bold text-white">
+                                  {rc.nombre}
+                                </p>
+                                <p className="text-[11px] text-[#DCEBE8]/60">
+                                  {rc.descripcion}
+                                </p>
+                              </div>
+                            </div>
                           </td>
-                          <td className="py-3.5 px-4 text-center font-semibold text-white">
+                          <td className="py-3.5 px-4 text-center font-mono font-bold text-white">
                             {rc.referencias}
                           </td>
-                          <td className="py-3.5 px-4 text-center font-mono text-white/80">
+                          <td className="py-3.5 px-4 text-center font-mono text-[#DCEBE8]">
                             {rc.unidades} u.
                           </td>
                           <td className="py-3.5 px-4 text-center">
                             {rc.criticos > 0 ? (
-                              <span className="rounded-full bg-rose-500/20 border border-rose-500/40 px-2.5 py-0.5 text-xs font-bold text-rose-300">
+                              <span className="rounded-full bg-[#B9673A] px-2.5 py-0.5 font-mono text-[10px] font-bold text-white">
                                 {rc.criticos} críticos
                               </span>
                             ) : (
-                              <span className="text-xs text-emerald-300">
+                              <span className="font-mono text-[11px] text-[#1E7F7A]">
                                 0 alertas
                               </span>
                             )}
                           </td>
-                          <td className="py-3.5 px-4 text-right font-mono text-white/70">
+                          <td className="py-3.5 px-4 text-right font-mono text-[#DCEBE8]/80">
                             {formatARS(rc.valorCosto)}
                           </td>
                           <td className="py-3.5 px-4 text-right font-mono font-bold text-white">
                             {formatARS(rc.valorVenta)}
                           </td>
-                          <td className="py-3.5 px-4 text-right font-mono font-bold text-cyan-300">
+                          <td className="py-3.5 px-4 text-right font-mono font-bold text-[#B9673A]">
                             {formatARS(rc.valorVenta - rc.valorCosto)}
                           </td>
                         </tr>
@@ -383,49 +383,52 @@ export function ReportesClient({ initialData }: { initialData: ErpSnapshot }) {
             },
             {
               value: "kardex",
-              label: "Kardex Completo de Movimientos",
+              label: "Kardex de Movimientos de Stock",
               badge: initialData.movimientos.length,
               content: (
                 <div className="overflow-x-auto custom-scroll">
                   <table className="w-full text-left border-collapse">
                     <thead>
-                      <tr className="border-b border-white/10 text-[11px] font-semibold uppercase tracking-wider text-white/55">
+                      <tr className="border-b border-[#DCEBE8]/15 font-mono text-[10px] font-bold uppercase tracking-wider text-[#DCEBE8]/75">
                         <th className="py-3 px-4">Fecha</th>
                         <th className="py-3 px-4">Tipo</th>
-                        <th className="py-3 px-4">Insumo</th>
+                        <th className="py-3 px-4">Producto</th>
                         <th className="py-3 px-4 text-center">Cantidad</th>
                         <th className="py-3 px-4">Entidad Vinculada</th>
-                        <th className="py-3 px-4">Motivo / Lote</th>
+                        <th className="py-3 px-4">Motivo / Remito</th>
                       </tr>
                     </thead>
-                    <tbody className="divide-y divide-white/8 text-xs sm:text-sm">
+                    <tbody className="divide-y divide-[#DCEBE8]/12 text-xs">
                       {initialData.movimientos.map((m) => (
-                        <tr key={m.id} className="hover:bg-white/[0.02]">
-                          <td className="py-3 px-4 text-xs text-white/60 whitespace-nowrap">
+                        <tr key={m.id} className="hover:bg-white/[0.03]">
+                          <td className="py-3 px-4 font-mono text-[11px] text-[#DCEBE8]/70 whitespace-nowrap">
                             {formatDateTimeAR(m.fecha)}
                           </td>
                           <td className="py-3 px-4">
                             <span
-                              className={`rounded-md px-2 py-0.5 text-[10px] font-bold ${
+                              className={`rounded px-2 py-0.5 font-mono text-[10px] font-bold ${
                                 m.tipo === "ENTRADA"
-                                  ? "bg-emerald-500/15 text-emerald-300"
-                                  : "bg-amber-500/15 text-amber-300"
+                                  ? "bg-[#1E7F7A]/30 text-[#DCEBE8]"
+                                  : "bg-[#B9673A]/30 text-white"
                               }`}
                             >
                               {m.tipo}
                             </span>
                           </td>
                           <td className="py-3 px-4 font-semibold text-white">
-                            {m.producto?.codigo} — {m.producto?.nombre}
+                            <span className="font-mono text-[#B9673A] mr-1.5">
+                              {m.producto?.codigo}
+                            </span>
+                            {m.producto?.nombre}
                           </td>
                           <td className="py-3 px-4 text-center font-mono font-bold text-white">
                             {m.tipo === "ENTRADA" ? "+" : "-"}
                             {m.cantidad} u.
                           </td>
-                          <td className="py-3 px-4 text-xs text-white/70">
-                            {m.entidad?.nombre || " Ajuste Interno "}
+                          <td className="py-3 px-4 text-[#DCEBE8]/80">
+                            {m.entidad?.nombre || "Ajuste Interno"}
                           </td>
-                          <td className="py-3 px-4 text-xs text-white/60">
+                          <td className="py-3 px-4 text-[#DCEBE8]/70">
                             {m.motivo}
                           </td>
                         </tr>
@@ -437,25 +440,25 @@ export function ReportesClient({ initialData }: { initialData: ErpSnapshot }) {
             },
             {
               value: "auditoria",
-              label: "Registro de Auditoría y Seguridad",
+              label: "Bitácora de Auditoría",
               badge: initialData.logs.length,
               content: (
-                <div className="space-y-2.5">
+                <div className="space-y-2">
                   {initialData.logs.map((l) => (
                     <div
                       key={l.id}
-                      className="flex flex-col sm:flex-row sm:items-center sm:justify-between rounded-xl border border-white/8 bg-white/[0.02] px-4 py-3 text-xs"
+                      className="flex flex-col sm:flex-row sm:items-center sm:justify-between rounded-xl border border-[#DCEBE8]/12 bg-[#1D2527]/45 px-4 py-3 text-xs"
                     >
                       <div className="flex items-center gap-3">
-                        <ShieldCheck className="h-4 w-4 text-cyan-400 shrink-0" />
+                        <ShieldCheck className="h-4 w-4 text-[#B9673A] shrink-0" />
                         <div>
-                          <span className="font-mono font-bold text-cyan-300 mr-2">
+                          <span className="font-mono font-bold text-[#B9673A] mr-2">
                             [{l.accion}]
                           </span>
-                          <span className="text-white/80">{l.detalle}</span>
+                          <span className="text-[#F6F3EE]">{l.detalle}</span>
                         </div>
                       </div>
-                      <span className="mt-1 sm:mt-0 text-[11px] text-white/45 font-mono">
+                      <span className="mt-1 sm:mt-0 font-mono text-[11px] text-[#DCEBE8]/55">
                         {formatDateTimeAR(l.fecha)}
                       </span>
                     </div>

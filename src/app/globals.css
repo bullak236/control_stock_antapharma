@@ -1,47 +1,56 @@
-@import url('https://fonts.googleapis.com/css2?family=Google+Sans:ital,opsz,wght@0,17..18,400..700;1,17..18,400..700&family=Inter:wght@400;500;600;700&display=swap');
+@import url('https://fonts.googleapis.com/css2?family=Bricolage+Grotesque:opsz,wght@12..96,400..800&family=IBM+Plex+Mono:wght@400;500;600;700&family=Instrument+Sans:ital,wght@0,400..700;1,400..700&display=swap');
 @import "tailwindcss";
 
 @theme {
-  --color-background: oklch(4% 0.01 264);
-  --color-foreground: oklch(98.5% 0 0);
+  /* Paleta Oficial Manual de Marca Antapharma v1.1 (Pág. 12) */
+  --color-petroleo: #0F3A40;
+  --color-quirofano: #1E7F7A;
+  --color-cobre: #B9673A;
+  --color-agua: #DCEBE8;
+  --color-gasa: #F6F3EE;
+  --color-tinta: #1D2527;
+  --color-acero: #6B7A7D;
 
-  --color-accent: oklch(84% 0.15 190);
-  --color-accent-foreground: oklch(8% 0.02 264);
+  /* Colores de Línea (Pág. 13) */
+  --color-linea-1: #B9673A;
+  --color-linea-2: #1E7F7A;
+  --color-linea-3: #C8952B;
+  --color-linea-4: #8C3B4A;
+  --color-linea-5: #2E6E9E;
+  --color-linea-6: #55656A;
 
-  --color-card: oklch(8.5% 0.012 264);
-  --color-card-foreground: oklch(98.5% 0 0);
+  --color-background: #0B262B;
+  --color-foreground: #F6F3EE;
 
-  --color-border: oklch(18% 0.015 264);
-  --color-ring: oklch(84% 0.15 190);
+  --color-accent: #B9673A;
+  --color-accent-foreground: #FFFFFF;
 
-  --color-muted: oklch(58% 0.015 264);
-  --color-muted-foreground: oklch(64% 0.015 264);
+  --color-card: #0F3A40;
+  --color-card-foreground: #F6F3EE;
 
-  --color-primary: oklch(84% 0.15 190);
-  --color-primary-foreground: oklch(8% 0.02 264);
+  --color-border: rgba(220, 235, 232, 0.14);
+  --color-ring: #B9673A;
 
-  --color-secondary: oklch(20% 0.02 264);
-  --color-secondary-foreground: oklch(98.5% 0 0);
+  --color-muted: #6B7A7D;
+  --color-muted-foreground: #DCEBE8;
 
-  --color-destructive: oklch(58% 0.22 27);
-  --color-destructive-foreground: oklch(98% 0.01 264);
+  --color-primary: #B9673A;
+  --color-primary-foreground: #FFFFFF;
 
-  --color-ring-offset: oklch(4% 0.01 264);
+  --color-secondary: #1E7F7A;
+  --color-secondary-foreground: #FFFFFF;
 
-  --radius-sm: 0.25rem;
-  --radius-md: 0.375rem;
-  --radius-lg: 0.5rem;
-  --radius-xl: 0.75rem;
-  --radius-2xl: 1rem;
-  --radius-3xl: 1.5rem;
+  --color-destructive: #8C3B4A;
+  --color-destructive-foreground: #FFFFFF;
+
+  /* Tres Familias Tipográficas (Pág. 14) */
+  --font-display: "Bricolage Grotesque", Arial, sans-serif;
+  --font-sans: "Instrument Sans", Arial, sans-serif;
+  --font-mono: "IBM Plex Mono", Consolas, monospace;
 
   --animate-fade-in: fade-in 0.25s ease-out;
-  --animate-fade-out: fade-out 0.2s ease-in;
   --animate-slide-in: slide-in 0.3s ease-out;
   --animate-dialog-in: dialog-fade-in 0.2s ease-out;
-
-  --font-google-sans: "Google Sans", "Inter", ui-sans-serif, system-ui;
-  --font-sans: var(--font-google-sans);
 
   @keyframes fade-in {
     from { opacity: 0; }
@@ -62,7 +71,7 @@
   @keyframes dialog-fade-in {
     from {
       opacity: 0;
-      transform: scale(0.96) translateY(-0.5rem);
+      transform: scale(0.97) translateY(-0.4rem);
     }
     to {
       opacity: 1;
@@ -84,16 +93,27 @@
   }
 
   body {
-    @apply bg-background text-foreground antialiased;
-    font-family: var(--font-google-sans);
-    letter-spacing: 0.015em;
+    background-color: #0B262B;
+    color: #F6F3EE;
+    font-family: var(--font-sans);
+    letter-spacing: 0.005em;
     overflow-x: hidden;
     -webkit-font-smoothing: antialiased;
     background-image:
-      radial-gradient(circle at 15% 0%, rgba(56, 189, 248, 0.08) 0%, transparent 45%),
-      radial-gradient(circle at 85% 10%, rgba(16, 185, 129, 0.06) 0%, transparent 40%),
-      radial-gradient(circle at 50% 100%, rgba(99, 102, 241, 0.05) 0%, transparent 50%);
+      radial-gradient(circle at 12% 0%, rgba(30, 127, 122, 0.22) 0%, transparent 48%),
+      radial-gradient(circle at 88% 12%, rgba(185, 103, 58, 0.12) 0%, transparent 42%),
+      linear-gradient(180deg, #0F3A40 0%, #091E22 100%);
     background-attachment: fixed;
+  }
+
+  h1, h2, h3, .font-display {
+    font-family: var(--font-display);
+    line-height: 1.08;
+  }
+
+  code, pre, .font-mono {
+    font-family: var(--font-mono);
+    letter-spacing: 0.04em;
   }
 
   a,
@@ -101,30 +121,43 @@
     cursor: pointer;
   }
 
+  /* Tarjetas estilo pouch sellado (Esquinas redondeadas suaves, filetes Acero) */
   .bento-glass {
-    background: linear-gradient(145deg, rgba(18, 20, 28, 0.85) 0%, rgba(9, 10, 15, 0.92) 100%);
-    backdrop-filter: blur(20px);
-    -webkit-backdrop-filter: blur(20px);
-    border: 1px solid rgba(255, 255, 255, 0.08);
+    background: linear-gradient(155deg, rgba(15, 58, 64, 0.92) 0%, rgba(19, 43, 47, 0.96) 100%);
+    backdrop-filter: blur(16px);
+    -webkit-backdrop-filter: blur(16px);
+    border: 1px solid rgba(220, 235, 232, 0.14);
     box-shadow:
-      0 20px 40px -15px rgba(0, 0, 0, 0.65),
-      inset 0 1px 0 0 rgba(255, 255, 255, 0.07);
+      0 16px 36px -14px rgba(0, 0, 0, 0.55),
+      inset 0 1px 0 0 rgba(246, 243, 238, 0.07);
   }
 
   .bento-glass-hover {
-    transition: all 0.25s cubic-bezier(0.22, 1, 0.36, 1);
+    transition: all 0.22s cubic-bezier(0.22, 1, 0.36, 1);
   }
 
   .bento-glass-hover:hover {
-    border-color: rgba(255, 255, 255, 0.16);
+    border-color: rgba(220, 235, 232, 0.26);
     box-shadow:
-      0 24px 48px -12px rgba(0, 0, 0, 0.8),
-      inset 0 1px 0 0 rgba(255, 255, 255, 0.12);
+      0 20px 42px -12px rgba(0, 0, 0, 0.68),
+      inset 0 1px 0 0 rgba(246, 243, 238, 0.12);
+  }
+
+  /* Celda editable estilo Excel Antapharma (Fondo Gasa/Crema) */
+  .input-gasa {
+    background-color: rgba(246, 243, 238, 0.07);
+    border: 1px solid rgba(220, 235, 232, 0.2);
+    color: #F6F3EE;
+  }
+
+  .input-gasa:focus {
+    border-color: #B9673A;
+    background-color: rgba(246, 243, 238, 0.11);
   }
 
   .custom-scroll {
     scrollbar-width: thin;
-    scrollbar-color: oklch(25% 0.01 264) transparent;
+    scrollbar-color: #1E7F7A transparent;
   }
 
   .custom-scroll::-webkit-scrollbar {
@@ -137,7 +170,7 @@
   }
 
   .custom-scroll::-webkit-scrollbar-thumb {
-    background: oklch(25% 0.01 264);
-    border-radius: 10px;
+    background: rgba(107, 122, 125, 0.5);
+    border-radius: 8px;
   }
 }
